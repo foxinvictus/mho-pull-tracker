@@ -226,6 +226,21 @@
     nav.tabs button{padding:3px 0}
     nav.tabs button svg{width:20px;height:20px}
   }
+  .saverow{flex:none;display:grid;grid-template-columns:1fr auto;gap:8px}
+  .saverow .btn{height:40px;display:flex;align-items:center;justify-content:center;gap:6px}
+  .saverow .btn.done{background:#1f1f1f;color:var(--tx);border-color:#4a4a4a}
+  .about{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .about b{font:700 18px/1.1 'Barlow Condensed',sans-serif;letter-spacing:.4px}
+  .cl{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+  .cl-hd{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px}
+  .cl-hd b{font:700 19px/1 'Barlow Condensed',sans-serif;letter-spacing:.4px}
+  .cl-hd span{font-size:11.5px;color:var(--mu);white-space:nowrap}
+  .cl .kind{font:600 10px Inter,sans-serif;text-transform:uppercase;letter-spacing:.4px;padding:2px 6px;border-radius:6px;border:1px solid var(--line);color:var(--mu);margin-left:6px;vertical-align:2px}
+  .cl .kind.major{border-color:var(--ac);color:var(--tx)}
+  .cl ul{margin:0;padding-left:18px;font-size:13px;line-height:1.45;color:#d6d6d6}
+  .cl li+li{margin-top:3px}
+  @media (max-width:400px){ .acc-name{display:none} }
+  @media (max-height:700px){ .saverow .btn{height:36px;font-size:13.5px} }
   [hidden]{display:none!important}
 </style>
 </head>
@@ -234,6 +249,9 @@
   <header>
     <h1>Pull-Rechner<small>Monster Hunter Outlands</small></h1>
     <div class="hbtns">
+      <button class="icon-btn" id="openCol" aria-label="Sammlung öffnen">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>
+      </button>
       <button class="icon-btn" id="openAcc" aria-label="Konto">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
         <span class="acc-name" id="accName" hidden></span><span class="dot" id="accDot" hidden></span>
@@ -271,73 +289,63 @@
         <div class="hint-line" id="rHint"></div>
       </section>
       <section class="card inputs" id="mainInputs"></section>
+      <div class="saverow">
+        <button class="btn pri" id="saveToday">Heutigen Stand speichern</button>
+        <button class="btn" id="openLog" aria-label="Verlauf ansehen">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 16l4.5-5 3.5 3 6-7"/></svg> Verlauf
+        </button>
+      </div>
       <div class="extras" id="extras"></div>
     </main>
+  </div>
 
-    <!-- ===== Sammlung ===== -->
-    <section class="view" id="vCol" hidden aria-label="Sammlung">
+  <div class="sheet-bg" id="sheetBg"></div>
+
+  <!-- ===== Sammlung ===== -->
+  <div class="sheet" id="sheetCol" role="dialog" aria-modal="true" aria-labelledby="colTitle">
+    <div class="sheet-hd">
+      <h2 id="colTitle">Sammlung</h2>
+      <button class="icon-btn" data-close aria-label="Sammlung schließen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="sheet-bd">
       <div class="card">
         <div class="sum"><div><b id="colCount">0 / 0</b><div class="big-lbl" style="text-align:left">SSR gezogen</div></div><span id="colSpez"></span></div>
         <div class="sumbar"><i id="colBar"></i></div>
         <p class="legend">Tippe auf einen Charakter: Gezogen → Sparen → Skip → zurück. Standard-Charaktere: einfach an/aus.</p>
       </div>
       <div id="timeline"></div>
-      <div class="card">
-        <details class="add">
-          <summary>Charakter selbst hinzufügen</summary>
-          <form id="addForm" class="form" autocomplete="off">
-            <label>Name<input type="text" id="afName" required maxlength="40" placeholder="z. B. Freya"></label>
-            <div class="seg-sel seg" role="group" aria-label="Typ">
-              <button type="button" data-type="Spezial" aria-pressed="true">Spezial</button>
-              <button type="button" data-type="Standard" aria-pressed="false">Standard</button>
-            </div>
-            <div class="two">
-              <label>Start<input type="date" id="afStart" required></label>
-              <label>Ende<input type="date" id="afEnd"></label>
-            </div>
-            <label>Version<input type="text" id="afVer" maxlength="30" placeholder="z. B. 1.1"></label>
-            <button class="btn pri" type="submit">Hinzufügen</button>
-            <p class="msg" id="afMsg"></p>
-          </form>
-        </details>
-      </div>
-      <p class="note" style="margin:0 2px 6px"><span id="srcNote"></span>. Enddaten in Klammern sind noch nicht offiziell bestätigt.</p>
-    </section>
+      <p class="note" style="margin:0 2px"><span id="srcNote"></span>. Enddaten in Klammern sind noch nicht offiziell bestätigt.</p>
+    </div>
+  </div>
 
-    <!-- ===== Logbuch ===== -->
-    <section class="view" id="vLog" hidden aria-label="Logbuch">
+  <!-- ===== Verlauf ===== -->
+  <div class="sheet" id="sheetLog" role="dialog" aria-modal="true" aria-labelledby="logTitle">
+    <div class="sheet-hd">
+      <h2 id="logTitle">Verlauf</h2>
+      <button class="icon-btn" data-close aria-label="Verlauf schließen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="sheet-bd">
       <div class="card">
-        <h2>Verlauf der Spezial-Pulls</h2>
+        <h2>Spezial-Pulls im Zeitverlauf</h2>
         <svg class="chart" id="logChart" viewBox="0 0 320 150" role="img" aria-label="Pulls im Zeitverlauf"></svg>
-        <p class="empty" id="logEmpty">Noch keine Einträge. Trag unten deinen ersten Stand ein.</p>
-      </div>
-      <div class="card">
-        <h2>Stand eintragen</h2>
-        <form id="logForm" class="form" style="margin-top:0" autocomplete="off">
-          <div class="two">
-            <label>Datum<input type="date" id="lfDate" required></label>
-            <label>Spezial-Pulls<input type="number" id="lfPulls" inputmode="numeric" min="0" step="1" required></label>
-          </div>
-          <button class="btn pri" type="submit">Eintragen</button>
-          <p class="note" style="margin-top:0">Die Pulls sind mit deinem aktuellen Stand aus dem Rechner vorausgefüllt. Ein Eintrag pro Tag, ein neuer ersetzt den alten.</p>
-        </form>
+        <p class="empty" id="logEmpty">Noch keine Einträge. Tippe auf der Hauptseite auf „Heutigen Stand speichern“.</p>
       </div>
       <div class="card">
         <h2>Einträge</h2>
         <ul class="loglist" id="logList"></ul>
+        <p class="note">Ein Eintrag pro Tag. Speicherst du am selben Tag nochmal, wird der Eintrag aktualisiert. ★ in der Kurve = an diesem Tag gezogener Charakter.</p>
       </div>
-    </section>
+    </div>
   </div>
 
-  <nav class="tabs" aria-label="Bereiche">
-    <button data-view="rechner" aria-current="page">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="2"/><path d="M8 6.5h8M8 11h.01M12 11h.01M16 11h.01M8 14.5h.01M12 14.5h.01M16 14.5h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>Rechner</button>
-    <button data-view="sammlung">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v18M6 6h11l-2 3.5L17 13H6"/></svg>Sammlung</button>
-    <button data-view="logbuch">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 16l4.5-5 3.5 3 6-7"/></svg>Logbuch</button>
-  </nav>
-
+  <!-- ===== Changelog ===== -->
+  <div class="sheet" id="sheetCl" role="dialog" aria-modal="true" aria-labelledby="clTitle">
+    <div class="sheet-hd">
+      <h2 id="clTitle">Changelog</h2>
+      <button class="icon-btn" data-close aria-label="Changelog schließen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="sheet-bd" id="clList"></div>
+  </div>
   <div class="sheet-bg" id="sheetBg"></div>
 
   <!-- ===== Konto ===== -->
@@ -374,7 +382,7 @@
         <button class="btn" id="accDelete" style="width:100%;margin-top:10px">Konto löschen</button>
         <p class="msg" id="accInMsg"></p>
       </section>
-      <p class="note">Gespeichert werden nur deine Eingaben im Rechner, deine Sammlung und dein Logbuch. Merk dir deine PIN gut, sie lässt sich nicht zurücksetzen. Zur Sicherheit kannst du in den Einstellungen zusätzlich einen Spielstand-Code erzeugen.</p>
+      <p class="note">Gespeichert werden nur deine Eingaben im Rechner, deine Sammlung und dein Verlauf. Merk dir deine PIN gut, sie lässt sich nicht zurücksetzen. Ohne Konto bleibt dein Stand nur auf diesem Gerät.</p>
     </div>
   </div>
 
@@ -408,19 +416,13 @@
         <p class="note">Eingeschaltete Werte werden unten auf dem Hauptbildschirm angezeigt.</p>
       </section>
       <section class="card">
-        <h2>Spielstand-Code</h2>
-        <p class="note" style="margin-top:0">Sicherung ohne Konto: Code erzeugen, kopieren und auf einem anderen Gerät einfügen.</p>
-        <textarea id="ioCode" aria-label="Spielstand-Code" placeholder="Code hier einfügen" style="margin-top:10px"></textarea>
-        <div class="btns">
-          <button class="btn pri" id="ioExport">Code erzeugen &amp; kopieren</button>
-          <button class="btn" id="ioImport">Code laden</button>
-        </div>
-        <p class="msg" id="ioMsg"></p>
-      </section>
-      <section class="card">
         <h2>Zurücksetzen</h2>
         <button class="btn" id="resetBtn" style="width:100%">Alles auf Standard zurücksetzen</button>
         <p class="msg" id="resetMsg"></p>
+      </section>
+      <section class="card about">
+        <div><b id="verText"></b><div class="big-lbl" id="verDate"></div></div>
+        <button class="btn" id="openCl">Changelog</button>
       </section>
     </div>
   </div>
@@ -527,7 +529,7 @@ function defaults() {
     cur:  { ppf: 0, ruta: 0, gut: 0 },
     swap: { ppf: true, ruta: true, gut: true },
     showStd: false, showKum: false, lost: false,
-    status: {}, pulledAt: {}, custom: [], hist: [],
+    status: {}, pulledAt: {}, hist: [],
     savedAt: 0
   };
 }
@@ -546,9 +548,6 @@ function merge(o) {
     for (const [k, v] of Object.entries(o.status)) if (['pulled', 'save', 'skip'].includes(v)) d.status[String(k).slice(0, 40)] = v;
   if (o.pulledAt && typeof o.pulledAt === 'object')
     for (const [k, v] of Object.entries(o.pulledAt)) if (ISO_RE.test(v)) d.pulledAt[String(k).slice(0, 40)] = v;
-  if (Array.isArray(o.custom)) d.custom = o.custom.filter(c => c && typeof c.name === 'string' && ISO_RE.test(c.start)).slice(0, 60)
-    .map(c => ({ id: String(c.id || 'c' + Math.random().toString(36).slice(2, 8)).slice(0, 40), name: c.name.slice(0, 40),
-      type: c.type === 'Standard' ? 'Standard' : 'Spezial', start: c.start, end: ISO_RE.test(c.end) ? c.end : '', ver: String(c.ver || '').slice(0, 30) }));
   if (Array.isArray(o.hist)) {
     const seen = new Set();
     for (const h of o.hist) {
@@ -784,7 +783,7 @@ async function loadChars() {
 
 /* ===== Sammlung / Zeitleiste ===== */
 function allChars() {
-  return [...CHARS, ...S.custom.map(c => ({ ...c, custom: true }))]
+  return [...CHARS]
     .sort((a, b) => a.start.localeCompare(b.start) || (a.type === b.type ? a.name.localeCompare(b.name) : a.type === 'Spezial' ? -1 : 1));
 }
 function phase(c, today) {
@@ -831,7 +830,6 @@ function tile(c, today) {
   return `<div class="tile${st ? ' st-' + st : ''}${isSp ? ' sp' : ''}${ph === 'live' && isSp ? ' live' : ''}" role="button" tabindex="0" data-tile="${c.id}"
       aria-label="${esc(c.name)}, ${isSp ? 'Spezial' : 'Standard'}, ${ST_LABEL[st] || 'kein Status'}. Tippen für ${next}.">
     ${isSp ? '<span class="t-tag">Spezial</span>' : ''}
-    ${c.custom ? `<button class="t-del" data-del="${c.id}" aria-label="${esc(c.name)} löschen">×</button>` : ''}
     <span class="t-name">${esc(c.name)}</span>
     ${info ? `<span class="t-info">${esc(info)}</span>` : ''}
     <span class="t-foot">${foot}</span>
@@ -849,12 +847,6 @@ function cycleStatus(id) {
   if (el) el.focus({ preventScroll: true });
 }
 $('timeline').addEventListener('click', e => {
-  const del = e.target.closest('[data-del]');
-  if (del) {
-    const id = del.dataset.del;
-    S.custom = S.custom.filter(c => c.id !== id); delete S.status[id]; delete S.pulledAt[id];
-    save(); renderCollection(); render(); return;
-  }
   const t = e.target.closest('[data-tile]');
   if (t) cycleStatus(t.dataset.tile);
 });
@@ -862,22 +854,6 @@ $('timeline').addEventListener('keydown', e => {
   const t = e.target.closest('[data-tile]');
   if (t && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); cycleStatus(t.dataset.tile); }
 });
-let addType = 'Spezial';
-document.querySelectorAll('[data-type]').forEach(b => b.addEventListener('click', () => {
-  addType = b.dataset.type;
-  document.querySelectorAll('[data-type]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
-}));
-$('addForm').addEventListener('submit', e => {
-  e.preventDefault();
-  const name = $('afName').value.trim(), start = $('afStart').value, end = $('afEnd').value, ver = $('afVer').value.trim();
-  if (!name || !start) { msg($('afMsg'), 'Name und Start brauchst du mindestens.', 'err'); return; }
-  if (end && end < start) { msg($('afMsg'), 'Das Ende liegt vor dem Start.', 'err'); return; }
-  S.custom.push({ id: 'c' + Date.now().toString(36), name, type: addType, start, end: addType === 'Spezial' ? (end || '') : '', ver });
-  save(); renderCollection(); render();
-  $('addForm').reset();
-  msg($('afMsg'), `${name} hinzugefügt. Er bleibt nur in deinem Stand.`, 'ok');
-});
-
 // Nächstes Spar-Ziel für den Rechner
 function goal() {
   const today = todayISO();
@@ -951,20 +927,19 @@ function renderLog() {
     <button class="del" data-log="${h.d}" aria-label="Eintrag vom ${dDE(h.d)} löschen">×</button></li>`).join('')
     : '<li style="display:block;text-align:center;color:var(--mu)">Noch keine Einträge</li>';
 }
-function prefillLog() {
-  $('lfDate').value = todayISO(); $('lfDate').max = todayISO();
-  $('lfPulls').value = totalPulls();
-}
-$('logForm').addEventListener('submit', e => {
-  e.preventDefault();
-  const d = $('lfDate').value, p = toInt($('lfPulls').value);
-  if (!ISO_RE.test(d)) return;
+function saveToday() {
+  const d = todayISO(), p = totalPulls();
   const c = Math.round(cycle(S.pity + p).ch * 10) / 10;
   S.hist = S.hist.filter(h => h.d !== d);
   S.hist.push({ d, p, c });
   S.hist.sort((a, b) => a.d.localeCompare(b.d));
   save(); renderLog();
-});
+  const b = $('saveToday');
+  b.textContent = `✓ Gespeichert: ${fmt(p)} Pulls`; b.classList.add('done');
+  clearTimeout(saveToday.t);
+  saveToday.t = setTimeout(() => { b.textContent = 'Heutigen Stand speichern'; b.classList.remove('done'); }, 2200);
+}
+$('saveToday').addEventListener('click', saveToday);
 $('logList').addEventListener('click', e => {
   const b = e.target.closest('[data-log]');
   if (!b) return;
@@ -1200,21 +1175,6 @@ $('accDelete').addEventListener('click', async () => {
 });
 
 /* ===== Navigation ===== */
-const VIEWS = { rechner: 'vCalc', sammlung: 'vCol', logbuch: 'vLog' };
-function showView(name) {
-  if (!VIEWS[name]) name = 'rechner';
-  for (const [k, id] of Object.entries(VIEWS)) $(id).hidden = k !== name;
-  document.querySelectorAll('nav.tabs button').forEach(b => {
-    if (b.dataset.view === name) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
-  });
-  if (name === 'logbuch') prefillLog();
-  if (name === 'rechner') render();
-}
-document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => {
-  if (location.hash !== '#' + b.dataset.view) location.hash = b.dataset.view; else showView(b.dataset.view);
-}));
-window.addEventListener('hashchange', () => showView(location.hash.slice(1)));
-
 const app = $('app');
 function openSheet(id) {
   document.querySelectorAll('.sheet').forEach(sh => sh.classList.toggle('show', sh.id === id));
@@ -1224,41 +1184,20 @@ function closeSheets() {
   document.querySelectorAll('.sheet').forEach(sh => sh.classList.remove('show'));
   app.classList.remove('open');
 }
-$('openSet').addEventListener('click', () => { msg($('ioMsg'), ''); msg($('resetMsg'), ''); openSheet('sheetSet'); });
+$('openSet').addEventListener('click', () => { msg($('resetMsg'), ''); openSheet('sheetSet'); });
 $('openAcc').addEventListener('click', () => { Cloud.ui(); openSheet('sheetAcc'); });
+$('openCol').addEventListener('click', () => { renderCollection(); openSheet('sheetCol'); });
+$('openLog').addEventListener('click', () => { renderLog(); openSheet('sheetLog'); });
+$('openCl').addEventListener('click', () => openSheet('sheetCl'));
 document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeSheets));
 $('sheetBg').addEventListener('click', closeSheets);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheets(); });
 
-/* ===== Spielstand-Code ===== */
-function toCode(obj) {
-  const bytes = new TextEncoder().encode(JSON.stringify(obj));
-  let bin = ''; bytes.forEach(b => { bin += String.fromCharCode(b); });
-  return CODE_PREFIX + btoa(bin);
-}
-function fromCode(code) {
-  let s = code.trim().replace(/\s+/g, '');
-  if (s.startsWith(CODE_PREFIX)) s = s.slice(CODE_PREFIX.length);
-  const bytes = Uint8Array.from(atob(s), ch => ch.charCodeAt(0));
-  return JSON.parse(new TextDecoder().decode(bytes));
-}
-$('ioExport').addEventListener('click', async () => {
-  const code = toCode(S), ta = $('ioCode');
-  ta.value = code;
-  try { await navigator.clipboard.writeText(code); msg($('ioMsg'), 'Code kopiert. Du kannst ihn jetzt irgendwo einfügen.', 'ok'); }
-  catch (e) { ta.focus(); ta.select(); msg($('ioMsg'), 'Kopieren wurde blockiert. Der Code ist markiert, kopiere ihn bitte von Hand.', 'err'); }
-});
-$('ioImport').addEventListener('click', () => {
-  const code = $('ioCode').value;
-  if (!code.trim()) { msg($('ioMsg'), 'Bitte zuerst einen Code einfügen.', 'err'); return; }
-  try { S = merge(fromCode(code)); save(); refreshAll(); msg($('ioMsg'), 'Spielstand geladen.', 'ok'); }
-  catch (e) { msg($('ioMsg'), 'Der Code ist ungültig oder unvollständig.', 'err'); }
-});
 let resetArmed = false;
 $('resetBtn').addEventListener('click', () => {
   if (!resetArmed) {
     resetArmed = true; $('resetBtn').textContent = 'Wirklich zurücksetzen? Nochmal tippen';
-    msg($('resetMsg'), Cloud.user ? 'Achtung: Auch dein Online-Stand wird überschrieben.' : 'Tipp vorher auf „Code erzeugen“, wenn du deinen Stand behalten willst.', 'err');
+    msg($('resetMsg'), Cloud.user ? 'Achtung: Auch dein Online-Stand wird überschrieben.' : 'Achtung: Dein Stand auf diesem Gerät wird gelöscht.', 'err');
     setTimeout(() => { resetArmed = false; $('resetBtn').textContent = 'Alles auf Standard zurücksetzen'; }, 4000);
     return;
   }
@@ -1268,10 +1207,89 @@ $('resetBtn').addEventListener('click', () => {
   msg($('resetMsg'), 'Zurückgesetzt.', 'ok');
 });
 
+/* ===== Version & Changelog =====
+   Versionsnummer: große Änderung = erste Zahl (Major), kleine Änderung = zweite Zahl (Minor).
+   Build = wie oft die Seite insgesamt bearbeitet wurde. Bei jeder Änderung oben einen Eintrag ergänzen. */
+const CHANGELOG = [
+  { v: '2.4', build: 13, date: '21.11.2026', kind: 'Minor', items: [
+    'Neuer Button „Changelog“ in den Einstellungen mit allen Versionen',
+    'Logbuch-Tab entfernt: „Heutigen Stand speichern“ jetzt direkt auf der Hauptseite, Kurve und Einträge über „Verlauf“',
+    'Sammlung öffnet sich über das Kachel-Symbol oben, die Tab-Leiste unten ist weg',
+    'Spielstand-Code entfernt (Speichern läuft über das Konto)',
+    '„Charakter selbst hinzufügen“ entfernt (Charaktere kommen aus dem Google Sheet)'
+  ]},
+  { v: '2.3', build: 12, date: '21.11.2026', kind: 'Minor', items: [
+    'Sammlung als Kachelübersicht, drei Charaktere pro Reihe',
+    'Antippen wechselt den Status: Gezogen → Sparen → Skip, Standard-Charaktere nur an/aus',
+    'Datum beim Ziehen muss nicht mehr eingetragen werden, es wird automatisch gemerkt'
+  ]},
+  { v: '2.2', build: 11, date: '21.11.2026', kind: 'Minor', items: [
+    'Firebase-Projekt „mho-pull-tracker“ verbunden, Online-Speichern aktiv',
+    'Veröffentlicht auf GitHub Pages: foxinvictus.github.io/mho-pull-tracker'
+  ]},
+  { v: '2.1', build: 10, date: '21.11.2026', kind: 'Minor', items: [
+    'Online-Speichern von Supabase auf Firebase umgestellt (pausiert nicht bei Inaktivität)',
+    'PIN jetzt 6–8 Ziffern',
+    'Sicherheitsregeln: jeder Spieler sieht nur seinen eigenen Stand'
+  ]},
+  { v: '2.0', build: 9, date: '21.11.2026', kind: 'Major', items: [
+    'Eigene Website statt einzelner HTML-Datei',
+    'Konto mit Spielername + PIN, Stand wird online gespeichert und auf allen Geräten geladen',
+    'Sammlung: Zeitleiste aller SSR-Charaktere (Spezial und Standard)',
+    'Logbuch mit Verlauf der Pulls als Kurve, gezogene Charaktere als ★ markiert',
+    'Charakter-Liste mit Typ-Spalte im Google Sheet, inklusive aller Standard-SSR'
+  ]},
+  { v: '1.7', build: 8, date: '21.11.2026', kind: 'Minor', items: [
+    'Banner-Liste wird aus dem Google Sheet (Tab „Banner“) geladen, zuletzt geladene Liste auch offline',
+    'Als HTML-Datei zum Weitergeben'
+  ]},
+  { v: '1.6', build: 7, date: '21.11.2026', kind: 'Minor', items: [
+    'Banner-Liste mit Charakter, Zeitraum und Version',
+    'Status pro Charakter: Gezogen, Sparen, Skip, Spar-Ziel auf der Hauptseite',
+    'Alle Währungen standardmäßig zum Umtauschen angehakt'
+  ]},
+  { v: '1.5', build: 6, date: '21.11.2026', kind: 'Minor', items: [
+    'Checkbox „50/50 zuletzt verloren“: Garantie nach 90 Pulls ab dem verlorenen 50/50'
+  ]},
+  { v: '1.4', build: 5, date: '21.11.2026', kind: 'Minor', items: [
+    'Nach 120 Pulls beginnt die Wahrscheinlichkeit wieder bei 0 %, Anzeige „1× sicher“ und „Chance auf den 2.“',
+    'Hinweis zum Tauschort des Spezial-Vorratsgutscheins (Laden › Tauschen › Rekrutierungstausch)',
+    'Neue Symbole für Spezial-Vorratsgutschein und Purpurfedermünzen, PPF-Münze heißt jetzt Purpurfedermünzen'
+  ]},
+  { v: '1.3', build: 4, date: '21.11.2026', kind: 'Minor', items: [
+    'Wahrscheinlichkeitskurve mit weichen Übergängen und Punkt für die aktuelle Position'
+  ]},
+  { v: '1.2', build: 3, date: '21.11.2026', kind: 'Minor', items: [
+    'Pity-Schwellen und Tauschkurse fest eingebaut und aus dem Menü entfernt'
+  ]},
+  { v: '1.1', build: 2, date: '21.11.2026', kind: 'Minor', items: [
+    'Monochromes Design, Hauptseite ohne Scrollen',
+    'Umtauschen, Standard- und kumulative Werte ins Einstellungsmenü verschoben',
+    'Symbole für Spezial-Vertrag, Standard-Vertrag und Ruta-Münzen',
+    'Wahrscheinlichkeit steigt gleichmäßig an statt in Stufen'
+  ]},
+  { v: '1.0', build: 1, date: '21.11.2026', kind: 'Major', items: [
+    'Erste Version des Pull-Rechners im 9:16-Format',
+    'Umrechnung von PPF-Münzen, Ruta-Münzen und Spezial-Vorratsgutscheinen in Spezial-Pulls, nur ganze Pulls',
+    'Wahrscheinlichkeit: 50 % bei 90 Pulls, 100 % bei 120 Pulls, inklusive aktueller Pity',
+    'Einstellungsmenü, Verlauf und Spielstand-Code'
+  ]}
+];
+const VERSION = CHANGELOG[0];
+function renderChangelog() {
+  $('verText').textContent = `Version ${VERSION.v} · Build ${VERSION.build}`;
+  $('verDate').textContent = `Stand ${VERSION.date}`;
+  $('clList').innerHTML = CHANGELOG.map(e => `
+    <article class="cl">
+      <div class="cl-hd"><b>Version ${e.v} · Build ${e.build}<span class="kind${e.kind === 'Major' ? ' major' : ''}">${e.kind === 'Major' ? 'Groß' : 'Klein'}</span></b><span>${e.date}</span></div>
+      <ul>${e.items.map(i => `<li>${esc(i)}</li>`).join('')}</ul>
+    </article>`).join('');
+}
+
 /* ===== Start ===== */
 buildSettings();
 refreshAll();
-showView(location.hash.slice(1));
+renderChangelog();
 Cloud.init();
 loadChars();
 </script>

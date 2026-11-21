@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c0c0c">
+<title>Pull-Rechner · Monster Hunter Outlands</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0c0c0c; --frame:#121212; --card:#191919; --card2:#222; --line:#2c2c2c;
+    --tx:#ededed; --mu:#8c8c8c; --ac:#f5f5f5; --r:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:#050505;color:var(--tx);font:15px/1.35 Inter,system-ui,sans-serif;-webkit-tap-highlight-color:transparent;overflow:hidden}
+  button,input{font-family:inherit}
+  .app{
+    position:relative;margin:0 auto;height:100dvh;
+    width:min(100vw, calc(100dvh * 9 / 16));
+    background:linear-gradient(180deg,#1a1a1a 0%,var(--frame) 40%,var(--bg) 100%);
+    overflow:hidden;display:flex;flex-direction:column;
+  }
+  @media (min-width:600px){ .app{box-shadow:0 0 0 1px var(--line),0 20px 60px #000c} }
+
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 14px 6px;flex:none}
+  h1{font:700 23px/1 'Barlow Condensed',sans-serif;letter-spacing:.6px;text-transform:uppercase}
+  h1 small{display:block;font:500 11.5px/1.4 Inter,sans-serif;color:var(--mu);letter-spacing:.2px;text-transform:none;margin-top:2px}
+  .hbtns{display:flex;gap:8px}
+  .icon-btn{height:40px;min-width:40px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--tx);display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;flex:none;padding:0 9px;font:600 13px Inter,sans-serif}
+  .icon-btn:active{transform:scale(.96)}
+  .acc-name{max-width:84px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dot{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--mu);flex:none}
+  .dot.ok{background:var(--ac);border-color:var(--ac)}
+  .dot.busy{border-color:var(--ac);animation:pulse 1s infinite}
+  .dot.err{border-color:#ff9b8a;background:#ff9b8a}
+  @keyframes pulse{50%{opacity:.3}}
+
+  .views{flex:1;min-height:0;position:relative}
+  .view{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px;padding:2px 12px 10px;overflow-y:auto}
+  .view[hidden]{display:none}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+  .card h2{font:700 14px/1 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.2px;color:var(--mu);margin-bottom:10px}
+
+  nav.tabs{flex:none;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);background:#0e0e0e;padding:4px 6px calc(4px + env(safe-area-inset-bottom))}
+  nav.tabs button{background:none;border:0;color:var(--mu);display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 0;font:600 11px Inter,sans-serif;cursor:pointer;border-radius:10px}
+  nav.tabs button svg{width:22px;height:22px}
+  nav.tabs button[aria-current="page"]{color:var(--tx);background:#1b1b1b}
+
+  /* Rechner */
+  .result{text-align:center;padding:12px 14px 10px;background:linear-gradient(170deg,#262626,#191919 70%);border-color:#353535;flex:none}
+  .graph{display:block;width:100%;height:auto;overflow:visible;max-height:22dvh}
+  .graph text{font:500 10px Inter,sans-serif;fill:#8c8c8c}
+  .stats{display:grid;grid-template-columns:1fr 1fr;margin-top:4px}
+  .stats > div + div{border-left:1px solid var(--line)}
+  .big{font:700 clamp(34px,6.4dvh,50px)/1 'Barlow Condensed',sans-serif}
+  .big-lbl{color:var(--mu);font-size:12px;margin-top:2px}
+  .hint-line{font-size:12px;color:var(--mu);margin-top:4px}
+  .hint-line b{color:var(--tx)}
+  .inputs{flex:none;padding:4px 14px}
+  .row{display:grid;grid-template-columns:30px 1fr 104px;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--line)}
+  .row:first-child{border-top:0}
+  .ico{width:30px;height:30px;display:grid;place-items:center}
+  .ico svg{width:28px;height:28px}
+  .name{font-weight:600;font-size:14.5px}
+  .sub{display:block;font-size:11.5px;color:var(--mu);font-weight:400;margin-top:1px}
+  input[type=number],input[type=text],input[type=password],input[type=date]{
+    width:100%;height:38px;border-radius:10px;border:1px solid var(--line);background:#0f0f0f;color:var(--tx);
+    font:600 16px Inter,sans-serif;padding:0 12px;color-scheme:dark
+  }
+  input[type=number]{text-align:right;-moz-appearance:textfield}
+  input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+  input:focus{outline:2px solid var(--ac);outline-offset:1px}
+  .extras{flex:none;font-size:12px;color:var(--mu);text-align:center;display:flex;flex-wrap:wrap;justify-content:center;gap:3px 14px}
+  .extras b{color:var(--tx);font-weight:600}
+  .goal{width:100%;color:var(--tx)}
+  .mini{position:relative;display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--mu);margin-top:3px;cursor:pointer;user-select:none}
+  .mini input{position:absolute;opacity:0;width:16px;height:16px;margin:0;cursor:pointer}
+  .mini i{width:16px;height:16px;border-radius:4px;border:1.5px solid #555;background:#0f0f0f;flex:none;position:relative}
+  .mini input:checked + i{background:var(--ac);border-color:var(--ac)}
+  .mini input:checked + i::after{content:"";position:absolute;left:4.5px;top:1.5px;width:4px;height:8px;border:solid #0c0c0c;border-width:0 2px 2px 0;transform:rotate(45deg)}
+  .mini input:checked ~ *{color:var(--tx)}
+  .mini input:focus-visible + i{outline:2px solid var(--ac);outline-offset:2px}
+
+  .btn{height:42px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--tx);font:600 14px Inter,sans-serif;cursor:pointer;padding:0 14px}
+  .btn.pri{background:var(--ac);border-color:var(--ac);color:#0c0c0c}
+  .btn:active{transform:scale(.98)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btns{display:flex;gap:8px;margin-top:10px}
+  .btns .btn{flex:1}
+  .note{font-size:12px;color:var(--mu);margin-top:8px}
+  .msg{font-size:13px;margin-top:8px;min-height:18px;color:var(--mu)}
+  .msg.ok{color:var(--tx)} .msg.err{color:#ff9b8a}
+
+  /* Sammlung / Zeitleiste */
+  .sum{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .sum b{font:700 30px/1 'Barlow Condensed',sans-serif}
+  .sum span{color:var(--mu);font-size:12.5px}
+  .sumbar{height:6px;border-radius:99px;background:#0a0a0a;border:1px solid var(--line);margin-top:10px;overflow:hidden}
+  .sumbar i{display:block;height:100%;background:var(--ac);width:0;transition:width .3s}
+  .tl{position:relative;padding-left:18px}
+  .tl::before{content:"";position:absolute;left:5px;top:6px;bottom:6px;width:2px;background:var(--line);border-radius:2px}
+  .tl-grp{position:relative;margin-bottom:14px}
+  .tl-grp::before{content:"";position:absolute;left:-17px;top:3px;width:10px;height:10px;border-radius:50%;background:var(--bg);border:2px solid var(--mu)}
+  .tl-grp.now::before{background:var(--ac);border-color:var(--ac)}
+  .tl-date{font:700 14px/1.2 'Barlow Condensed',sans-serif;letter-spacing:1px;text-transform:uppercase;color:var(--mu);margin-bottom:6px}
+  .tl-date b{color:var(--tx)}
+  .chr{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+  .chr.got{border-color:#4a4a4a;background:#1f1f1f}
+  .chr-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .chr-name{font:700 19px/1 'Barlow Condensed',sans-serif;letter-spacing:.4px;display:flex;align-items:center;gap:7px}
+  .tag{font:600 10px Inter,sans-serif;letter-spacing:.3px;text-transform:uppercase;padding:2px 6px;border-radius:6px;border:1px solid var(--line);color:var(--mu)}
+  .tag.sp{border-color:#666;color:var(--tx)}
+  .pill{font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;border:1px solid var(--line);color:var(--mu);white-space:nowrap}
+  .pill.live{background:var(--ac);color:#0c0c0c;border-color:var(--ac)}
+  .chr-meta{font-size:12px;color:var(--mu);margin-top:4px;line-height:1.45}
+  .chr-meta b{color:var(--tx);font-weight:600}
+  .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+  .seg.one{grid-template-columns:1fr}
+  .seg button{height:34px;border-radius:9px;border:1px solid var(--line);background:#141414;color:var(--mu);font:600 13px Inter,sans-serif;cursor:pointer}
+  .seg button[aria-pressed="true"]{background:var(--ac);color:#0c0c0c;border-color:var(--ac)}
+  .chr.compact{padding:9px 12px}
+  .chr-act{display:flex;align-items:center;gap:4px}
+  .tog{height:32px;padding:0 12px;border-radius:9px;border:1px solid var(--line);background:#141414;color:var(--mu);font:600 13px Inter,sans-serif;cursor:pointer;white-space:nowrap}
+  .tog[aria-pressed="true"]{background:var(--ac);color:#0c0c0c;border-color:var(--ac)}
+  .got-date{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--mu)}
+  .got-date input{height:34px;font-size:14px;flex:1}
+  .del{background:none;border:0;color:var(--mu);font-size:18px;cursor:pointer;width:26px;height:26px}
+  details.add summary{cursor:pointer;list-style:none;font:700 14px/1 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.2px;color:var(--mu)}
+  details.add summary::-webkit-details-marker{display:none}
+  details.add summary::before{content:"+ "}
+  details.add[open] summary::before{content:"– "}
+  .form{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+  .form label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mu)}
+  .form .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .form input{font-weight:500;font-size:15px}
+  .form input[type=number]{text-align:left}
+  .seg-sel{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+
+  /* Logbuch */
+  .chart{display:block;width:100%;height:auto;overflow:visible}
+  .chart text{font:500 10px Inter,sans-serif;fill:#8c8c8c}
+  .chart .lbl{fill:#cfcfcf;font-weight:600}
+  .loglist{list-style:none;display:flex;flex-direction:column;gap:6px}
+  .loglist li{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;background:#141414;border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:14px}
+  .loglist .d{color:var(--mu)} .loglist .p{font-weight:600} .loglist .c{font-weight:600;min-width:52px;text-align:right}
+  .empty{color:var(--mu);font-size:13px;text-align:center;padding:14px 0}
+
+  /* Sheets */
+  .sheet-bg{position:absolute;inset:0;background:#000b;opacity:0;pointer-events:none;transition:opacity .2s;z-index:5}
+  .open .sheet-bg{opacity:1;pointer-events:auto}
+  .sheet{position:absolute;left:0;right:0;bottom:0;max-height:92%;background:var(--frame);border-top:1px solid var(--line);border-radius:20px 20px 0 0;
+    transform:translateY(102%);transition:transform .25s ease;z-index:6;display:flex;flex-direction:column}
+  .sheet.show{transform:none}
+  .sheet-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;flex:none}
+  .sheet-hd h2{font:700 22px/1 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.6px}
+  .sheet-bd{overflow-y:auto;padding:4px 12px calc(20px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px}
+  .cb{position:relative;width:28px;height:28px;flex:none}
+  .cb input{position:absolute;inset:0;opacity:0;cursor:pointer;margin:0}
+  .cb i{position:absolute;inset:0;border-radius:8px;border:2px solid #444;background:#0f0f0f;pointer-events:none;transition:.15s}
+  .cb input:checked + i{background:var(--ac);border-color:var(--ac)}
+  .cb input:checked + i::after{content:"";position:absolute;left:8px;top:3px;width:7px;height:13px;border:solid #0c0c0c;border-width:0 3px 3px 0;transform:rotate(45deg)}
+  .cb input:focus-visible + i{outline:2px solid var(--ac);outline-offset:2px}
+  .swap{display:grid;grid-template-columns:28px 26px 1fr;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+  .swap:first-child{border-top:0}
+  .swap .ico,.swap .ico svg{width:26px;height:26px}
+  .swap .name{font-size:14px}
+  .tgl{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0}
+  .tgl span small{display:block;color:var(--mu);font-size:12px}
+  .sw{position:relative;width:50px;height:30px;flex:none}
+  .sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+  .sw i{position:absolute;inset:0;border-radius:99px;background:#333;transition:.2s;pointer-events:none}
+  .sw i::after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#bdbdbd;transition:.2s}
+  .sw input:checked + i{background:var(--ac)}
+  .sw input:checked + i::after{transform:translateX(20px);background:#0c0c0c}
+  .sw input:focus-visible + i{outline:2px solid var(--ac);outline-offset:2px}
+  .grp{border-top:1px solid var(--line);padding-top:4px}
+  .grp:first-of-type{border-top:0;padding-top:0}
+  .sub-rows .row{grid-template-columns:30px 1fr 96px;padding:6px 0}
+  textarea{width:100%;min-height:80px;border-radius:10px;border:1px solid var(--line);background:#0f0f0f;color:var(--tx);font:12px/1.4 ui-monospace,Menlo,monospace;padding:10px;resize:vertical;word-break:break-all}
+  textarea:focus{outline:2px solid var(--ac);outline-offset:1px}
+  .acc-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+  .acc-tabs button{height:36px;border-radius:10px;border:1px solid var(--line);background:#141414;color:var(--mu);font:600 13px Inter,sans-serif;cursor:pointer}
+  .acc-tabs button[aria-pressed="true"]{background:var(--ac);color:#0c0c0c;border-color:var(--ac)}
+  .who{font:700 26px/1.1 'Barlow Condensed',sans-serif}
+
+  @media (max-height:700px){
+    header{padding-top:calc(6px + env(safe-area-inset-top));padding-bottom:4px}
+    h1{font-size:21px} h1 small{font-size:11px}
+    .icon-btn{height:36px;min-width:36px}
+    .view{gap:6px}
+    .result{padding:8px 12px 6px}
+    .graph{max-height:17dvh}
+    .big{font-size:clamp(30px,5.6dvh,42px)}
+    .big-lbl{font-size:11px;margin-top:1px}
+    .hint-line{font-size:11px;margin-top:2px}
+    .row{padding:3px 0}
+    .inputs{padding:2px 14px}
+    .inputs input[type=number]{height:34px;font-size:15px}
+    .sub{font-size:11px}
+    .name{font-size:14px}
+    .extras{font-size:11.5px;gap:2px 12px}
+    nav.tabs button{padding:3px 0}
+    nav.tabs button svg{width:20px;height:20px}
+  }
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <h1>Pull-Rechner<small>Monster Hunter Outlands</small></h1>
+    <div class="hbtns">
+      <button class="icon-btn" id="openAcc" aria-label="Konto">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+        <span class="acc-name" id="accName" hidden></span><span class="dot" id="accDot" hidden></span>
+      </button>
+      <button class="icon-btn" id="openSet" aria-label="Einstellungen öffnen">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="views">
+    <!-- ===== Rechner ===== -->
+    <main class="view" id="vCalc">
+      <section class="card result" aria-live="polite">
+        <svg class="graph" id="graph" viewBox="0 0 300 104" role="img" aria-label="Verlauf der Wahrscheinlichkeit">
+          <defs>
+            <linearGradient id="gArea" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#f5f5f5" stop-opacity=".32"/>
+              <stop offset="1" stop-color="#f5f5f5" stop-opacity="0"/>
+            </linearGradient>
+            <clipPath id="gClip"><rect id="gClipRect" x="0" y="0" width="0" height="104"/></clipPath>
+          </defs>
+          <g id="gGrid"></g>
+          <path id="gAreaPath" fill="url(#gArea)" clip-path="url(#gClip)"/>
+          <path id="gCurveBg" fill="none" stroke="#4a4a4a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path id="gCurve" fill="none" stroke="#f5f5f5" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" clip-path="url(#gClip)"/>
+          <line id="gDrop" stroke="#f5f5f5" stroke-opacity=".45" stroke-width="1" stroke-dasharray="3 3"/>
+          <circle id="gHalo" r="8" fill="#f5f5f5" fill-opacity=".18"/>
+          <circle id="gDot" r="4.5" fill="#f5f5f5" stroke="#191919" stroke-width="2"/>
+        </svg>
+        <div class="stats">
+          <div><div class="big" id="rPulls">0</div><div class="big-lbl">Spezial-Pulls</div></div>
+          <div><div class="big" id="rChance">0 %</div><div class="big-lbl" id="rChanceLbl">Chance auf Spezial</div></div>
+        </div>
+        <div class="hint-line" id="rHint"></div>
+      </section>
+      <section class="card inputs" id="mainInputs"></section>
+      <div class="extras" id="extras"></div>
+    </main>
+
+    <!-- ===== Sammlung ===== -->
+    <section class="view" id="vCol" hidden aria-label="Sammlung">
+      <div class="card">
+        <div class="sum"><div><b id="colCount">0 / 0</b><div class="big-lbl" style="text-align:left">SSR gezogen</div></div><span id="colSpez"></span></div>
+        <div class="sumbar"><i id="colBar"></i></div>
+      </div>
+      <div class="tl" id="timeline"></div>
+      <div class="card">
+        <details class="add">
+          <summary>Charakter selbst hinzufügen</summary>
+          <form id="addForm" class="form" autocomplete="off">
+            <label>Name<input type="text" id="afName" required maxlength="40" placeholder="z. B. Freya"></label>
+            <div class="seg-sel seg" role="group" aria-label="Typ">
+              <button type="button" data-type="Spezial" aria-pressed="true">Spezial</button>
+              <button type="button" data-type="Standard" aria-pressed="false">Standard</button>
+            </div>
+            <div class="two">
+              <label>Start<input type="date" id="afStart" required></label>
+              <label>Ende<input type="date" id="afEnd"></label>
+            </div>
+            <label>Version<input type="text" id="afVer" maxlength="30" placeholder="z. B. 1.1"></label>
+            <button class="btn pri" type="submit">Hinzufügen</button>
+            <p class="msg" id="afMsg"></p>
+          </form>
+        </details>
+      </div>
+      <p class="note" style="margin:0 2px 6px"><span id="srcNote"></span>. Enddaten in Klammern sind noch nicht offiziell bestätigt.</p>
+    </section>
+
+    <!-- ===== Logbuch ===== -->
+    <section class="view" id="vLog" hidden aria-label="Logbuch">
+      <div class="card">
+        <h2>Verlauf der Spezial-Pulls</h2>
+        <svg class="chart" id="logChart" viewBox="0 0 320 150" role="img" aria-label="Pulls im Zeitverlauf"></svg>
+        <p class="empty" id="logEmpty">Noch keine Einträge. Trag unten deinen ersten Stand ein.</p>
+      </div>
+      <div class="card">
+        <h2>Stand eintragen</h2>
+        <form id="logForm" class="form" style="margin-top:0" autocomplete="off">
+          <div class="two">
+            <label>Datum<input type="date" id="lfDate" required></label>
+            <label>Spezial-Pulls<input type="number" id="lfPulls" inputmode="numeric" min="0" step="1" required></label>
+          </div>
+          <button class="btn pri" type="submit">Eintragen</button>
+          <p class="note" style="margin-top:0">Die Pulls sind mit deinem aktuellen Stand aus dem Rechner vorausgefüllt. Ein Eintrag pro Tag, ein neuer ersetzt den alten.</p>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Einträge</h2>
+        <ul class="loglist" id="logList"></ul>
+      </div>
+    </section>
+  </div>
+
+  <nav class="tabs" aria-label="Bereiche">
+    <button data-view="rechner" aria-current="page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="2"/><path d="M8 6.5h8M8 11h.01M12 11h.01M16 11h.01M8 14.5h.01M12 14.5h.01M16 14.5h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>Rechner</button>
+    <button data-view="sammlung">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v18M6 6h11l-2 3.5L17 13H6"/></svg>Sammlung</button>
+    <button data-view="logbuch">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 16l4.5-5 3.5 3 6-7"/></svg>Logbuch</button>
+  </nav>
+
+  <div class="sheet-bg" id="sheetBg"></div>
+
+  <!-- ===== Konto ===== -->
+  <div class="sheet" id="sheetAcc" role="dialog" aria-modal="true" aria-labelledby="accTitle">
+    <div class="sheet-hd">
+      <h2 id="accTitle">Konto</h2>
+      <button class="icon-btn" data-close aria-label="Konto schließen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="sheet-bd">
+      <section class="card" id="accOff" hidden>
+        <p>Online-Speichern ist auf dieser Seite noch nicht eingerichtet. Dein Stand wird nur auf diesem Gerät gespeichert.</p>
+      </section>
+      <section class="card" id="accOut" hidden>
+        <div class="acc-tabs" role="group" aria-label="Anmelden oder registrieren">
+          <button type="button" data-mode="login" aria-pressed="true">Anmelden</button>
+          <button type="button" data-mode="register" aria-pressed="false">Neu registrieren</button>
+        </div>
+        <form id="accForm" class="form" style="margin-top:0" autocomplete="off">
+          <label>Spielername<input type="text" id="accUser" required minlength="3" maxlength="20" autocomplete="username"></label>
+          <label>PIN (6–8 Ziffern)<input type="password" id="accPin" required inputmode="numeric" pattern="[0-9]{6,8}" maxlength="8" autocomplete="current-password"></label>
+          <button class="btn pri" type="submit" id="accSubmit">Anmelden</button>
+          <p class="msg" id="accMsg"></p>
+        </form>
+        <p class="note" id="accHint">Melde dich an, um deinen Stand online zu speichern und auf jedem Gerät weiterzumachen.</p>
+      </section>
+      <section class="card" id="accIn" hidden>
+        <div class="big-lbl">Angemeldet als</div>
+        <div class="who" id="accWho"></div>
+        <p class="note" id="accSync"></p>
+        <div class="btns">
+          <button class="btn" id="accSyncNow">Jetzt speichern</button>
+          <button class="btn" id="accLogout">Abmelden</button>
+        </div>
+        <button class="btn" id="accDelete" style="width:100%;margin-top:10px">Konto löschen</button>
+        <p class="msg" id="accInMsg"></p>
+      </section>
+      <p class="note">Gespeichert werden nur deine Eingaben im Rechner, deine Sammlung und dein Logbuch. Merk dir deine PIN gut, sie lässt sich nicht zurücksetzen. Zur Sicherheit kannst du in den Einstellungen zusätzlich einen Spielstand-Code erzeugen.</p>
+    </div>
+  </div>
+
+  <!-- ===== Einstellungen ===== -->
+  <div class="sheet" id="sheetSet" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <div class="sheet-hd">
+      <h2 id="setTitle">Einstellungen</h2>
+      <button class="icon-btn" data-close aria-label="Einstellungen schließen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="sheet-bd">
+      <section class="card">
+        <h2>Umtauschen</h2>
+        <div id="swapList"></div>
+        <p class="note">Haken = Währung wird umgetauscht und erscheint auf dem Hauptbildschirm.</p>
+      </section>
+      <section class="card">
+        <h2>Zusätzliche Werte</h2>
+        <div class="grp">
+          <div class="tgl"><span>Standard-Werte<small>Standard-Vertrag und Standard-Pulls</small></span><label class="sw"><input type="checkbox" id="optStd"><i></i></label></div>
+          <div class="sub-rows" id="stdRows">
+            <div class="row"><span class="ico" data-icon="std"></span><label class="name" for="inStdVertrag">Standard-Vertrag</label><input type="number" id="inStdVertrag" inputmode="numeric" min="0" step="1"></div>
+          </div>
+        </div>
+        <div class="grp">
+          <div class="tgl"><span>Kumulative Werte<small>insgesamt gemachte Pulls</small></span><label class="sw"><input type="checkbox" id="optKum"><i></i></label></div>
+          <div class="sub-rows" id="kumRows">
+            <div class="row"><span class="ico" data-icon="spezial"></span><label class="name" for="inKumSpezial">Spezial-Pulls gesamt</label><input type="number" id="inKumSpezial" inputmode="numeric" min="0" step="1"></div>
+            <div class="row" id="rowKumStd"><span class="ico" data-icon="std"></span><label class="name" for="inKumStd">Standard-Pulls gesamt</label><input type="number" id="inKumStd" inputmode="numeric" min="0" step="1"></div>
+          </div>
+        </div>
+        <p class="note">Eingeschaltete Werte werden unten auf dem Hauptbildschirm angezeigt.</p>
+      </section>
+      <section class="card">
+        <h2>Spielstand-Code</h2>
+        <p class="note" style="margin-top:0">Sicherung ohne Konto: Code erzeugen, kopieren und auf einem anderen Gerät einfügen.</p>
+        <textarea id="ioCode" aria-label="Spielstand-Code" placeholder="Code hier einfügen" style="margin-top:10px"></textarea>
+        <div class="btns">
+          <button class="btn pri" id="ioExport">Code erzeugen &amp; kopieren</button>
+          <button class="btn" id="ioImport">Code laden</button>
+        </div>
+        <p class="msg" id="ioMsg"></p>
+      </section>
+      <section class="card">
+        <h2>Zurücksetzen</h2>
+        <button class="btn" id="resetBtn" style="width:100%">Alles auf Standard zurücksetzen</button>
+        <p class="msg" id="resetMsg"></p>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ================================================================
+   EINRICHTUNG: Hier die Firebase-Konfiguration einfügen
+   (Firebase-Konsole → Projekteinstellungen → Meine Apps → „firebaseConfig“).
+   null lassen = Seite funktioniert, aber ohne Online-Speichern.
+   Beispiel:
+   const FIREBASE_CONFIG = {
+     apiKey: "AIza…", authDomain: "dein-projekt.firebaseapp.com",
+     projectId: "dein-projekt", appId: "1:123:web:abc"
+   };
+   ================================================================ */
+const FIREBASE_CONFIG = null;
+
+/* Charakter-Liste aus Google Sheets (Tab „Banner“, freigegeben für „Jeder mit dem Link“) */
+const SHEET_ID = '1awzRfZ6izTMxP3rsOjbmB0eabhP-xgzmBzQXldKrCgo';
+
+const STORE_KEY = 'mho_pullrechner_v1';
+const ACC_KEY = 'mho_account_v1';
+const CHAR_CACHE = 'mho_chars_cache_v2';
+const CODE_PREFIX = 'MHO1-';
+const RATIO = { ppf: [150, 1], ruta: [150, 1], gut: [50, 1] };
+const THR = [[90, 50], [120, 100]];
+const LOST_LEN = THR[0][0];
+
+const ICONS = {
+  // Spezial-Vertrag: roter Briefumschlag, Rückseite mit Klappe und Siegel
+  spezial: `<svg viewBox="0 0 32 32" aria-hidden="true">
+    <rect x="3" y="7" width="26" height="18" rx="2.5" fill="#b8322c"/>
+    <path d="M3.6 8.2 16 18l12.4-9.8" fill="#8e221d"/>
+    <path d="M3.6 8.2 16 18l12.4-9.8" fill="none" stroke="#e05a4f" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M3.5 24.4 12.5 16M28.5 24.4 19.5 16" stroke="#8e221d" stroke-width="1.2"/>
+    <circle cx="16" cy="17.4" r="3" fill="#f0c45a" stroke="#8e221d" stroke-width=".8"/></svg>`,
+  // Standard-Vertrag: beiger Briefumschlag, Vorderseite
+  std: `<svg viewBox="0 0 32 32" aria-hidden="true">
+    <rect x="3" y="7" width="26" height="18" rx="2.5" fill="#e3d3b0"/>
+    <path d="M4 8.5 16 17 28 8.5" fill="none" stroke="#a8946c" stroke-width="1.5" stroke-linejoin="round"/>
+    <rect x="20" y="10.5" width="5" height="4" rx=".6" fill="none" stroke="#a8946c" stroke-width="1"/></svg>`,
+  // Ruta-Münze: gelbes Pik-Symbol
+  ruta: `<svg viewBox="0 0 32 32" aria-hidden="true">
+    <path d="M16 3.5c-1.6 3.3-5 5.9-7.6 8.4C6.3 14 5 16 5 18.4c0 3.3 2.6 5.6 5.6 5.6 1.9 0 3.4-.8 4.3-2.1-.4 2.6-1.6 4.5-3.6 5.9h9.4c-2-1.4-3.2-3.3-3.6-5.9.9 1.3 2.4 2.1 4.3 2.1 3 0 5.6-2.3 5.6-5.6 0-2.4-1.3-4.4-3.4-6.5C21 9.4 17.6 6.8 16 3.5z" fill="#f2c230" stroke="#9c7a12" stroke-width="1" stroke-linejoin="round"/></svg>`,
+  // Spezial-Vorratsgutschein: beiger vierzackiger Stern
+  gut: `<svg viewBox="0 0 32 32" aria-hidden="true">
+    <path d="M16 2.5C17 11 21 15 29.5 16 21 17 17 21 16 29.5 15 21 11 17 2.5 16 11 15 15 11 16 2.5z" fill="#e3d3b0" stroke="#a8946c" stroke-width="1" stroke-linejoin="round"/></svg>`,
+  // Purpurfedermünze: hellblaues Dreieck mit Spitze oben, unten eingezogen mit Spitze nach unten
+  ppf: `<svg viewBox="0 0 32 32" aria-hidden="true">
+    <path d="M16 3 28 21H21L16 29.5 11 21H4z" fill="#8fd3f4" stroke="#3f8db5" stroke-width="1.1" stroke-linejoin="round"/>
+    <path d="M16 7.5V24" stroke="#3f8db5" stroke-width="1" stroke-linecap="round" opacity=".7"/></svg>`,
+  pity: `<svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="#9a9a9a" stroke-width="2" stroke-linecap="round">
+    <circle cx="16" cy="17" r="10"/><path d="M16 11v6l4 2.5M13 3.5h6"/></svg>`
+};
+
+const CURRENCIES = [
+  { id: 'ppf',  name: 'Purpurfedermünzen', icon: 'ppf' },
+  { id: 'ruta', name: 'Ruta-Münzen', icon: 'ruta' },
+  { id: 'gut',  name: 'Spezial-Vorratsgutschein', icon: 'gut', where: 'Laden › Tauschen › Rekrutierungstausch' }
+];
+
+/* Eingebaute Charakter-Liste (wird durch das Google Sheet ersetzt, wenn erreichbar) */
+const DEFAULT_CHARS = [
+  { id: 'midori', name: 'Midori', type: 'Spezial', info: 'Feuer · Langschwert · „Autumn Refrain“', start: '2026-10-29', end: '2026-11-27', ver: '1.0' },
+  { id: 'freya', name: 'Freya', type: 'Spezial', info: 'Feuer · Großschwert · „Crimson Authority“', start: '2026-11-27', end: '2027-01-21', endUnsure: true, ver: 'Season 0' },
+  { id: 'arkaya', name: 'Arkaya', type: 'Standard', info: 'Drache · Lanze', start: '2026-10-29', ver: '1.0' },
+  { id: 'haze', name: 'Haze', type: 'Standard', info: 'Donner · Doppelklingen', start: '2026-10-29', ver: '1.0' },
+  { id: 'keres', name: 'Keres', type: 'Standard', info: 'Drache · Doppelklingen', start: '2026-10-29', ver: '1.0' },
+  { id: 'luka', name: 'Luka', type: 'Standard', info: 'Donner · Bogen', start: '2026-10-29', ver: '1.0' },
+  { id: 'pepper', name: 'Pepper', type: 'Standard', info: 'Wasser · Schwere Bogenwaffe', start: '2026-10-29', ver: '1.0' },
+  { id: 'pyro', name: 'Pyro', type: 'Standard', info: 'Drache · Großschwert', start: '2026-10-29', ver: '1.0' },
+  { id: 'rhodes', name: 'Rhodes', type: 'Standard', info: 'Eis · Hammer', start: '2026-10-29', ver: '1.0' }
+];
+let CHARS = DEFAULT_CHARS;
+let charSource = 'Eingebaute Liste';
+
+/* ===== Hilfen ===== */
+const $ = id => document.getElementById(id);
+const fmt = n => n.toLocaleString('de-DE');
+const pct = n => (Math.round(n * 10) / 10).toLocaleString('de-DE') + ' %';
+const toInt = v => Math.max(0, Math.floor(+v || 0));
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
+const dDE = iso => { const [y, m, d] = iso.split('-'); return `${d}.${m}.${y}`; };
+const todayISO = () => { const t = new Date(); return new Date(t.getTime() - t.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+const daysBetween = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
+const slug = t => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'x';
+const stamp = t => new Date(t).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+function msg(el, text, kind) { el.textContent = text; el.className = 'msg' + (kind ? ' ' + kind : ''); }
+
+/* ===== Zustand ===== */
+function defaults() {
+  return {
+    spezial: 0, pity: 0, stdVertrag: 0, kumSpezial: 0, kumStd: 0,
+    cur:  { ppf: 0, ruta: 0, gut: 0 },
+    swap: { ppf: true, ruta: true, gut: true },
+    showStd: false, showKum: false, lost: false,
+    status: {}, pulledAt: {}, custom: [], hist: [],
+    savedAt: 0
+  };
+}
+function merge(o) {
+  const d = defaults();
+  if (!o || typeof o !== 'object') return d;
+  const num = (v, f) => (Number.isFinite(+v) && +v >= 0 ? +v : f);
+  d.spezial = num(o.spezial, 0); d.pity = num(o.pity, 0);
+  d.stdVertrag = num(o.stdVertrag, 0); d.kumSpezial = num(o.kumSpezial, 0); d.kumStd = num(o.kumStd, 0);
+  for (const c of CURRENCIES) {
+    if (o.cur) d.cur[c.id] = num(o.cur[c.id], 0);
+    if (o.swap && typeof o.swap[c.id] === 'boolean') d.swap[c.id] = o.swap[c.id];
+  }
+  for (const k of ['showStd', 'showKum', 'lost']) if (typeof o[k] === 'boolean') d[k] = o[k];
+  if (o.status && typeof o.status === 'object')
+    for (const [k, v] of Object.entries(o.status)) if (['pulled', 'save', 'skip'].includes(v)) d.status[String(k).slice(0, 40)] = v;
+  if (o.pulledAt && typeof o.pulledAt === 'object')
+    for (const [k, v] of Object.entries(o.pulledAt)) if (ISO_RE.test(v)) d.pulledAt[String(k).slice(0, 40)] = v;
+  if (Array.isArray(o.custom)) d.custom = o.custom.filter(c => c && typeof c.name === 'string' && ISO_RE.test(c.start)).slice(0, 60)
+    .map(c => ({ id: String(c.id || 'c' + Math.random().toString(36).slice(2, 8)).slice(0, 40), name: c.name.slice(0, 40),
+      type: c.type === 'Standard' ? 'Standard' : 'Spezial', start: c.start, end: ISO_RE.test(c.end) ? c.end : '', ver: String(c.ver || '').slice(0, 30) }));
+  if (Array.isArray(o.hist)) {
+    const seen = new Set();
+    for (const h of o.hist) {
+      if (!h || typeof h.d !== 'string') continue;
+      let iso = h.d;
+      const m = h.d.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);      // altes Format TT.MM.JJJJ
+      if (m) iso = `${m[3]}-${m[2]}-${m[1]}`;
+      if (!ISO_RE.test(iso) || seen.has(iso)) continue;
+      seen.add(iso);
+      d.hist.push({ d: iso, p: num(h.p, 0), c: num(h.c, 0) });
+      if (d.hist.length >= 500) break;
+    }
+    d.hist.sort((a, b) => a.d.localeCompare(b.d));
+  }
+  d.savedAt = num(o.savedAt, 0);
+  return d;
+}
+
+let S = (() => {
+  try { const raw = localStorage.getItem(STORE_KEY); if (raw) return merge(JSON.parse(raw)); } catch (e) { /* kein Speicher */ }
+  return defaults();
+})();
+
+function persist() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (e) { /* kein Speicher */ }
+}
+function save() {          // bei jeder Änderung durch den Spieler
+  S.savedAt = Date.now();
+  persist();
+  Cloud.queue();
+}
+
+/* ===== Rechnen ===== */
+function swapped(id) {
+  const [a, b] = RATIO[id];
+  const full = Math.floor(S.cur[id] / a);
+  return { pulls: full * b, rest: S.cur[id] - full * a };
+}
+function totalPulls() {
+  let t = S.spezial;
+  for (const c of CURRENCIES) if (S.swap[c.id]) t += swapped(c.id).pulls;
+  return t;
+}
+function chance(n) {
+  const [[p1, c1], [p2, c2]] = THR;
+  if (n >= p2) return c2;
+  if (n >= p1) return c1 + (n - p1) * (c2 - c1) / (p2 - p1);
+  return n * c1 / p1;
+}
+const chanceLost = n => Math.min(100, n * 100 / LOST_LEN);
+// Nach der Garantie beginnt ein neuer Durchlauf bei 0 % (dann ohne verlorenes 50/50)
+function cycle(n) {
+  const len = THR[1][0];
+  const first = S.lost ? LOST_LEN : len;
+  if (n < first) return { copies: 0, rest: n, ch: S.lost ? chanceLost(n) : chance(n), lostMode: S.lost };
+  const after = n - first;
+  const rest = after % len;
+  return { copies: 1 + Math.floor(after / len), rest, ch: chance(rest), lostMode: false };
+}
+
+/* ===== Graph (Rechner) ===== */
+const G = { x0: 30, x1: 284, y0: 8, y1: 84, max: 120 };
+const gx = v => G.x0 + (v / G.max) * (G.x1 - G.x0);
+const gy = c => G.y1 - (c / 100) * (G.y1 - G.y0);
+const SVGNS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs, parent, text) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const [a, v] of Object.entries(attrs)) e.setAttribute(a, v);
+  if (text != null) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+let graphMode = null;
+function buildGraph(lostMode) {
+  if (graphMode === lostMode) return;
+  graphMode = lostMode;
+  const [[p1, c1], [p2]] = THR;
+  const k = 9;
+  const f = lostMode ? chanceLost : chance;
+  const P = n => [gx(n), gy(f(n))].map(v => v.toFixed(1)).join(' ');
+  const end = lostMode ? LOST_LEN : p2;
+  const d = lostMode
+    ? `M ${P(0)} L ${P(LOST_LEN)}`
+    : `M ${P(0)} L ${P(p1 - k)} Q ${gx(p1).toFixed(1)} ${gy(c1).toFixed(1)} ${P(p1 + k * (p2 - p1) / p1 * .55)} L ${P(p2)}`;
+  $('gCurve').setAttribute('d', d);
+  $('gCurveBg').setAttribute('d', d);
+  $('gAreaPath').setAttribute('d', d + ` L ${gx(end)} ${G.y1} L ${gx(0)} ${G.y1} Z`);
+  const g = $('gGrid'); g.innerHTML = '';
+  const line = (x1, y1, x2, y2) => svgEl('line', { x1, y1, x2, y2, stroke: '#2e2e2e', 'stroke-width': 1, 'stroke-dasharray': '2 3' }, g);
+  line(G.x0, G.y1, G.x1, G.y1);
+  for (const c of [50, 100]) { line(G.x0, gy(c), G.x1, gy(c)); svgEl('text', { x: G.x0 - 5, y: gy(c) + 3.5, 'text-anchor': 'end' }, g, c + '%'); }
+  if (!lostMode) line(gx(p1), G.y0, gx(p1), G.y1);
+  svgEl('path', { d: `M ${gx(end)} ${gy(100)} L ${gx(end)} ${G.y1}`, stroke: '#6a6a6a', 'stroke-width': 1.6, 'stroke-dasharray': '3 3', fill: 'none' }, g);
+  svgEl('text', { x: gx(end) + 5, y: G.y1 - 4 }, g, '↺ 0%');
+  svgEl('text', { x: gx(0), y: G.y1 + 14, 'text-anchor': 'middle' }, g, '0');
+  svgEl('text', { x: gx(p1), y: G.y1 + 14, 'text-anchor': 'middle' }, g, p1);
+  if (!lostMode) svgEl('text', { x: gx(p2), y: G.y1 + 14, 'text-anchor': 'middle' }, g, p2);
+}
+function drawGraph(n) {
+  const x = gx(Math.min(n, G.max));
+  let pt;
+  try {
+    const path = $('gCurve'), len = path.getTotalLength();
+    let lo = 0, hi = len;
+    for (let i = 0; i < 24; i++) { const mid = (lo + hi) / 2; if (path.getPointAtLength(mid).x < x) lo = mid; else hi = mid; }
+    pt = path.getPointAtLength(hi);
+  } catch (e) { pt = { x, y: gy(graphMode ? chanceLost(n) : chance(n)) }; }
+  $('gClipRect').setAttribute('width', pt.x);
+  for (const id of ['gDot', 'gHalo']) { $(id).setAttribute('cx', pt.x); $(id).setAttribute('cy', pt.y); }
+  const d = $('gDrop');
+  d.setAttribute('x1', pt.x); d.setAttribute('x2', pt.x); d.setAttribute('y1', pt.y); d.setAttribute('y2', G.y1);
+}
+
+/* ===== Rechner: Eingaben ===== */
+function buildMain() {
+  const rows = [`<div class="row"><span class="ico">${ICONS.spezial}</span>
+      <label class="name" for="inSpezial">Spezial-Vertrag<span class="sub">zählt 1:1</span></label>
+      <input type="number" id="inSpezial" inputmode="numeric" min="0" step="1"></div>`];
+  for (const c of CURRENCIES) {
+    if (!S.swap[c.id]) continue;
+    rows.push(`<div class="row"><span class="ico">${ICONS[c.icon] || ''}</span>
+      <label class="name" for="in_${c.id}">${c.name}<span class="sub" id="sub_${c.id}"></span></label>
+      <input type="number" id="in_${c.id}" inputmode="numeric" min="0" step="1"></div>`);
+  }
+  rows.push(`<div class="row"><span class="ico">${ICONS.pity}</span>
+    <div><label class="name" for="inPity">Pity aktuell</label>
+      <label class="mini"><input type="checkbox" id="inLost"><i></i><span>50/50 zuletzt verloren</span></label></div>
+    <input type="number" id="inPity" inputmode="numeric" min="0" step="1"></div>`);
+  $('mainInputs').innerHTML = rows.join('');
+  const bind = (id, get, set) => {
+    const el = $(id); el.value = get() || '';
+    el.addEventListener('input', () => { set(toInt(el.value)); save(); render(); });
+  };
+  bind('inSpezial', () => S.spezial, v => { S.spezial = v; });
+  bind('inPity', () => S.pity, v => { S.pity = v; });
+  for (const c of CURRENCIES) if ($('in_' + c.id)) bind('in_' + c.id, () => S.cur[c.id], v => { S.cur[c.id] = v; });
+  const lo = $('inLost'); lo.checked = S.lost;
+  lo.addEventListener('change', () => { S.lost = lo.checked; save(); render(); });
+}
+
+/* ===== Einstellungen ===== */
+function buildSettings() {
+  $('swapList').innerHTML = CURRENCIES.map(c => `
+    <div class="swap">
+      <label class="cb"><input type="checkbox" id="sw_${c.id}" aria-label="${c.name} umtauschen"><i></i></label>
+      <span class="ico">${ICONS[c.icon] || ''}</span>
+      <label class="name" for="sw_${c.id}">${c.name}${c.where ? `<span class="sub">Tauschen unter ${c.where}</span>` : ''}</label>
+    </div>`).join('');
+  document.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML = ICONS[el.dataset.icon]; });
+  for (const c of CURRENCIES)
+    $('sw_' + c.id).addEventListener('change', e => { S.swap[c.id] = e.target.checked; save(); buildMain(); render(); });
+  for (const [id, k] of [['inStdVertrag', 'stdVertrag'], ['inKumSpezial', 'kumSpezial'], ['inKumStd', 'kumStd']])
+    $(id).addEventListener('input', () => { S[k] = toInt($(id).value); save(); render(); });
+  $('optStd').addEventListener('change', e => { S.showStd = e.target.checked; save(); render(); });
+  $('optKum').addEventListener('change', e => { S.showKum = e.target.checked; save(); render(); });
+}
+function fillSettings() {
+  for (const c of CURRENCIES) $('sw_' + c.id).checked = S.swap[c.id];
+  $('inStdVertrag').value = S.stdVertrag || '';
+  $('inKumSpezial').value = S.kumSpezial || '';
+  $('inKumStd').value = S.kumStd || '';
+  $('optStd').checked = S.showStd; $('optKum').checked = S.showKum;
+}
+
+/* ===== Charaktere aus Google Sheets ===== */
+function parseCSV(text) {
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) {
+      if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+      else cell += ch;
+    } else if (ch === '"') q = true;
+    else if (ch === ',') { row.push(cell); cell = ''; }
+    else if (ch === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
+    else if (ch !== '\r') cell += ch;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+function toISO(v) {
+  v = (v || '').trim(); let m;
+  if ((m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+  if ((m = v.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/))) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  if ((m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/))) return `${m[3]}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`;
+  return '';
+}
+function charsFromCSV(text) {
+  const rows = parseCSV(text).filter(r => r.some(c => c.trim()));
+  if (rows.length < 2) return null;
+  const head = rows[0].map(h => h.trim().toLowerCase());
+  const col = names => head.findIndex(h => names.some(n => h.startsWith(n)));
+  const iN = col(['charakter', 'name']), iT = col(['typ']), iI = col(['info']), iS = col(['start']),
+        iE = head.findIndex(h => h === 'ende'), iC = col(['ende best', 'bestätigt']), iV = col(['version']);
+  if (iN < 0 || iS < 0) return null;
+  const seen = new Set(), list = [];
+  for (const r of rows.slice(1)) {
+    const name = (r[iN] || '').trim(), start = toISO(r[iS]);
+    if (!name || !start) continue;
+    let id = slug(name);
+    if (seen.has(id)) id += '-' + start;
+    seen.add(id);
+    const end = iE >= 0 ? toISO(r[iE]) : '';
+    const conf = iC >= 0 ? /^(true|wahr|ja|x|1)$/i.test((r[iC] || '').trim()) : true;
+    const type = iT >= 0 && /^standard/i.test((r[iT] || '').trim()) ? 'Standard' : 'Spezial';
+    list.push({ id, name: name.slice(0, 40), type, info: iI >= 0 ? (r[iI] || '').trim().slice(0, 80) : '', start, end,
+      endUnsure: !!end && !conf, ver: iV >= 0 ? (r[iV] || '').trim().slice(0, 30) : '' });
+  }
+  return list.length ? list : null;
+}
+async function loadChars() {
+  try {
+    const c = JSON.parse(localStorage.getItem(CHAR_CACHE) || 'null');
+    if (c && Array.isArray(c.list) && c.list.length) { CHARS = c.list; charSource = `Liste vom ${stamp(c.at)} (offline)`; }
+  } catch (e) { /* kein Speicher */ }
+  try {
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), 8000);
+    const res = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Banner`, { signal: ctl.signal, cache: 'no-store' });
+    clearTimeout(t);
+    if (!res.ok) throw new Error(res.status);
+    const list = charsFromCSV(await res.text());
+    if (!list) throw new Error('leer');
+    CHARS = list;
+    const at = Date.now();
+    charSource = `Aktuelle Liste, geladen am ${stamp(at)}`;
+    try { localStorage.setItem(CHAR_CACHE, JSON.stringify({ at, list })); } catch (e) { /* kein Speicher */ }
+  } catch (e) {
+    if (charSource === 'Eingebaute Liste') charSource = 'Eingebaute Liste (Online-Liste nicht erreichbar)';
+  }
+  renderCollection(); render();
+}
+
+/* ===== Sammlung / Zeitleiste ===== */
+function allChars() {
+  return [...CHARS, ...S.custom.map(c => ({ ...c, custom: true }))]
+    .sort((a, b) => a.start.localeCompare(b.start) || (a.type === b.type ? a.name.localeCompare(b.name) : a.type === 'Spezial' ? -1 : 1));
+}
+function phase(c, today) {
+  if (today < c.start) return 'soon';
+  if (c.type === 'Spezial' && c.end && today > c.end) return 'past';
+  return 'live';
+}
+function renderCollection() {
+  const today = todayISO();
+  const list = allChars();
+  const got = list.filter(c => S.status[c.id] === 'pulled');
+  $('colCount').textContent = `${got.length} / ${list.length}`;
+  $('colBar').style.width = (list.length ? got.length / list.length * 100 : 0) + '%';
+  const sp = list.filter(c => c.type === 'Spezial');
+  $('colSpez').textContent = `Spezial ${sp.filter(c => S.status[c.id] === 'pulled').length} / ${sp.length}`;
+  $('srcNote').textContent = charSource;
+
+  const groups = [];
+  for (const c of list) {
+    const g = groups[groups.length - 1];
+    if (g && g.start === c.start) g.items.push(c); else groups.push({ start: c.start, items: [c] });
+  }
+  $('timeline').innerHTML = groups.map(g => {
+    const ver = [...new Set(g.items.map(c => c.ver).filter(Boolean))].join(' / ');
+    const soon = g.start > today;
+    const live = g.items.some(c => c.type === 'Spezial' && phase(c, today) === 'live');
+    return `<div class="tl-grp${live ? ' now' : ''}">
+      <div class="tl-date"><b>${dDE(g.start)}</b>${ver ? ' · Version ' + esc(ver) : ''}${soon ? ' · kommt' : ''}</div>
+      ${g.items.map(c => charCard(c, today)).join('')}
+    </div>`;
+  }).join('');
+}
+function charCard(c, today) {
+  const st = S.status[c.id] || '', ph = phase(c, today), isSp = c.type === 'Spezial';
+  let pill = '';
+  if (isSp) {
+    if (ph === 'live') pill = `<span class="pill live">Läuft${c.end ? ' · noch ' + Math.max(0, daysBetween(today, c.end)) + ' T.' : ''}</span>`;
+    else if (ph === 'soon') pill = `<span class="pill">in ${daysBetween(today, c.start)} Tagen</span>`;
+    else pill = '<span class="pill">Vorbei</span>';
+  }
+  const end = c.end ? (c.endUnsure ? `(${dDE(c.end)})` : dDE(c.end)) : 'offen';
+  const meta = [c.info ? esc(c.info) : '', isSp ? `<b>${dDE(c.start)} – ${end}</b>` : ''].filter(Boolean).join('<br>');
+  const opts = isSp ? [['pulled', 'Gezogen'], ['save', 'Sparen'], ['skip', 'Skip']] : [['pulled', 'Gezogen']];
+  if (!isSp) return `<article class="chr compact${st === 'pulled' ? ' got' : ''}">
+    <div class="chr-top">
+      <span class="chr-name">${esc(c.name)}<span class="tag">Standard</span></span>
+      <span class="chr-act">${c.custom ? `<button class="del" data-del="${c.id}" aria-label="${esc(c.name)} löschen">×</button>` : ''}
+        <button type="button" class="tog" data-chr="${c.id}" data-st="pulled" aria-pressed="${st === 'pulled'}">${st === 'pulled' ? '✓ Gezogen' : 'Gezogen?'}</button></span>
+    </div>
+    ${c.info ? `<div class="chr-meta">${esc(c.info)}</div>` : ''}
+    ${st === 'pulled' ? `<label class="got-date">Gezogen am<input type="date" data-date="${c.id}" value="${S.pulledAt[c.id] || ''}" max="${today}"></label>` : ''}
+  </article>`;
+  return `<article class="chr${st === 'pulled' ? ' got' : ''}">
+    <div class="chr-top">
+      <span class="chr-name">${esc(c.name)}<span class="tag${isSp ? ' sp' : ''}">${isSp ? 'Spezial' : 'Standard'}</span></span>
+      <span>${pill}${c.custom ? `<button class="del" data-del="${c.id}" aria-label="${esc(c.name)} löschen">×</button>` : ''}</span>
+    </div>
+    ${meta ? `<div class="chr-meta">${meta}</div>` : ''}
+    <div class="seg${isSp ? '' : ' one'}" role="group" aria-label="Status für ${esc(c.name)}">
+      ${opts.map(([k, l]) => `<button type="button" data-chr="${c.id}" data-st="${k}" aria-pressed="${st === k}">${l}</button>`).join('')}
+    </div>
+    ${st === 'pulled' ? `<label class="got-date">Gezogen am<input type="date" data-date="${c.id}" value="${S.pulledAt[c.id] || ''}" max="${today}"></label>` : ''}
+  </article>`;
+}
+$('timeline').addEventListener('click', e => {
+  const del = e.target.closest('[data-del]');
+  if (del) {
+    const id = del.dataset.del;
+    S.custom = S.custom.filter(c => c.id !== id); delete S.status[id]; delete S.pulledAt[id];
+    save(); renderCollection(); render(); return;
+  }
+  const b = e.target.closest('[data-st]');
+  if (!b) return;
+  const id = b.dataset.chr, st = b.dataset.st;
+  if (S.status[id] === st) { delete S.status[id]; if (st === 'pulled') delete S.pulledAt[id]; }
+  else {
+    S.status[id] = st;
+    if (st === 'pulled' && !S.pulledAt[id]) S.pulledAt[id] = todayISO();
+    if (st !== 'pulled') delete S.pulledAt[id];
+  }
+  save(); renderCollection(); render();
+});
+$('timeline').addEventListener('change', e => {
+  const inp = e.target.closest('[data-date]');
+  if (!inp) return;
+  if (ISO_RE.test(inp.value)) S.pulledAt[inp.dataset.date] = inp.value; else delete S.pulledAt[inp.dataset.date];
+  save(); renderLog();
+});
+let addType = 'Spezial';
+document.querySelectorAll('[data-type]').forEach(b => b.addEventListener('click', () => {
+  addType = b.dataset.type;
+  document.querySelectorAll('[data-type]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+}));
+$('addForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('afName').value.trim(), start = $('afStart').value, end = $('afEnd').value, ver = $('afVer').value.trim();
+  if (!name || !start) { msg($('afMsg'), 'Name und Start brauchst du mindestens.', 'err'); return; }
+  if (end && end < start) { msg($('afMsg'), 'Das Ende liegt vor dem Start.', 'err'); return; }
+  S.custom.push({ id: 'c' + Date.now().toString(36), name, type: addType, start, end: addType === 'Spezial' ? (end || '') : '', ver });
+  save(); renderCollection(); render();
+  $('addForm').reset();
+  msg($('afMsg'), `${name} hinzugefügt. Er bleibt nur in deinem Stand.`, 'ok');
+});
+
+// Nächstes Spar-Ziel für den Rechner
+function goal() {
+  const today = todayISO();
+  const c = allChars().find(x => x.type === 'Spezial' && S.status[x.id] === 'save' && phase(x, today) !== 'past');
+  if (!c) return '';
+  if (phase(c, today) === 'soon') {
+    const d = daysBetween(today, c.start);
+    return `Ziel: <b>${esc(c.name)}</b> · ab ${dDE(c.start).slice(0, 6)} (in ${d} ${d === 1 ? 'Tag' : 'Tagen'})`;
+  }
+  return `Ziel: <b>${esc(c.name)}</b> · läuft` + (c.end ? `, noch ${Math.max(0, daysBetween(today, c.end))} Tage` : '');
+}
+
+/* ===== Logbuch ===== */
+function smoothPath(pts) {   // monotone kubische Kurve, keine Ausreißer nach oben/unten
+  if (pts.length < 2) return '';
+  const n = pts.length, dx = [], dy = [], m = [], t = [];
+  for (let i = 0; i < n - 1; i++) { dx[i] = pts[i + 1][0] - pts[i][0]; dy[i] = pts[i + 1][1] - pts[i][1]; m[i] = dx[i] ? dy[i] / dx[i] : 0; }
+  t[0] = m[0]; t[n - 1] = m[n - 2];
+  for (let i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+  for (let i = 0; i < n - 1; i++) {
+    if (m[i] === 0) { t[i] = 0; t[i + 1] = 0; continue; }
+    const a = t[i] / m[i], b = t[i + 1] / m[i], h = a * a + b * b;
+    if (h > 9) { const s = 3 / Math.sqrt(h); t[i] = s * a * m[i]; t[i + 1] = s * b * m[i]; }
+  }
+  let d = `M ${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const h = dx[i] / 3;
+    d += ` C ${(pts[i][0] + h).toFixed(1)} ${(pts[i][1] + t[i] * h).toFixed(1)} ${(pts[i + 1][0] - h).toFixed(1)} ${(pts[i + 1][1] - t[i + 1] * h).toFixed(1)} ${pts[i + 1][0].toFixed(1)} ${pts[i + 1][1].toFixed(1)}`;
+  }
+  return d;
+}
+function renderLog() {
+  const svg = $('logChart'); svg.innerHTML = '';
+  const H = S.hist;
+  $('logEmpty').hidden = H.length > 0;
+  svg.style.display = H.length ? '' : 'none';
+  if (H.length) {
+    const X0 = 34, X1 = 308, Y0 = 22, Y1 = 124;
+    const t0 = Date.parse(H[0].d), t1 = Date.parse(H[H.length - 1].d);
+    const span = Math.max(t1 - t0, 864e5);
+    const maxP = Math.max(10, ...H.map(h => h.p));
+    const top = Math.ceil(maxP / 10) * 10;
+    const xs = d => H.length === 1 ? (X0 + X1) / 2 : X0 + (Date.parse(d) - t0) / span * (X1 - X0);
+    const ys = p => Y1 - p / top * (Y1 - Y0);
+    for (const v of [0, top / 2, top]) {
+      svgEl('line', { x1: X0, x2: X1, y1: ys(v), y2: ys(v), stroke: '#2e2e2e', 'stroke-dasharray': v ? '2 3' : '' }, svg);
+      svgEl('text', { x: X0 - 6, y: ys(v) + 3.5, 'text-anchor': 'end' }, svg, fmt(Math.round(v)));
+    }
+    // gezogene Charaktere als Markierung
+    const names = Object.fromEntries(allChars().map(c => [c.id, c.name]));
+    let lastX = -99, row = 0;
+    Object.entries(S.pulledAt).filter(([id, d]) => S.status[id] === 'pulled' && names[id] && Date.parse(d) >= t0 && Date.parse(d) <= Math.max(t1, t0 + span))
+      .sort((a, b) => a[1].localeCompare(b[1])).forEach(([id, d]) => {
+        const x = xs(d);
+        row = x - lastX < 46 ? (row + 1) % 2 : 0; lastX = x;
+        svgEl('line', { x1: x, x2: x, y1: Y0 - 4 + row * 10, y2: Y1, stroke: '#8c8c8c', 'stroke-dasharray': '2 3' }, svg);
+        svgEl('text', { x, y: Y0 - 8 + row * 10, 'text-anchor': 'middle', class: 'lbl' }, svg, '★ ' + names[id]);
+      });
+    const pts = H.map(h => [xs(h.d), ys(h.p)]);
+    if (pts.length > 1) {
+      const d = smoothPath(pts);
+      svgEl('path', { d: d + ` L ${pts[pts.length - 1][0]} ${Y1} L ${pts[0][0]} ${Y1} Z`, fill: '#f5f5f5', 'fill-opacity': .1 }, svg);
+      svgEl('path', { d, fill: 'none', stroke: '#f5f5f5', 'stroke-width': 2.4, 'stroke-linecap': 'round' }, svg);
+    }
+    pts.forEach(([x, y]) => svgEl('circle', { cx: x, cy: y, r: 3.2, fill: '#f5f5f5', stroke: '#191919', 'stroke-width': 1.5 }, svg));
+    svgEl('text', { x: X0, y: Y1 + 16, 'text-anchor': 'start' }, svg, dDE(H[0].d).slice(0, 6));
+    if (H.length > 1) svgEl('text', { x: X1, y: Y1 + 16, 'text-anchor': 'end' }, svg, dDE(H[H.length - 1].d).slice(0, 6));
+  }
+  $('logList').innerHTML = H.length ? [...H].reverse().map(h => `
+    <li><span class="d">${dDE(h.d)}</span><span class="p">${fmt(h.p)} Pulls</span><span class="c">${pct(h.c)}</span>
+    <button class="del" data-log="${h.d}" aria-label="Eintrag vom ${dDE(h.d)} löschen">×</button></li>`).join('')
+    : '<li style="display:block;text-align:center;color:var(--mu)">Noch keine Einträge</li>';
+}
+function prefillLog() {
+  $('lfDate').value = todayISO(); $('lfDate').max = todayISO();
+  $('lfPulls').value = totalPulls();
+}
+$('logForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const d = $('lfDate').value, p = toInt($('lfPulls').value);
+  if (!ISO_RE.test(d)) return;
+  const c = Math.round(cycle(S.pity + p).ch * 10) / 10;
+  S.hist = S.hist.filter(h => h.d !== d);
+  S.hist.push({ d, p, c });
+  S.hist.sort((a, b) => a.d.localeCompare(b.d));
+  save(); renderLog();
+});
+$('logList').addEventListener('click', e => {
+  const b = e.target.closest('[data-log]');
+  if (!b) return;
+  S.hist = S.hist.filter(h => h.d !== b.dataset.log);
+  save(); renderLog();
+});
+
+/* ===== Anzeige Rechner ===== */
+function render() {
+  const pulls = totalPulls();
+  const n = S.pity + pulls;
+  const { copies, rest, ch, lostMode } = cycle(n);
+  const [[p1, c1], [p2]] = THR;
+  buildGraph(lostMode);
+  $('rPulls').textContent = fmt(pulls);
+  $('rChance').textContent = pct(ch);
+  $('rChanceLbl').textContent = copies ? `Chance auf den ${copies + 1}.` : 'Chance auf Spezial';
+  drawGraph(rest);
+  let hint = `Pity ${fmt(S.pity)} + ${fmt(pulls)} Pulls = <b>${fmt(n)}</b>`;
+  if (copies) hint = `<b>${copies}× sicher</b> · ${fmt(rest)} im neuen Durchlauf`;
+  if (lostMode) hint += ` · noch <b>${fmt(LOST_LEN - rest)}</b> bis zur Garantie`;
+  else if (rest < p1) hint += ` · noch <b>${fmt(p1 - rest)}</b> bis ${pct(c1)}`;
+  else hint += ` · noch <b>${fmt(p2 - rest)}</b> bis zur Garantie`;
+  $('rHint').innerHTML = hint;
+  for (const c of CURRENCIES) {
+    const sub = $('sub_' + c.id);
+    if (!sub) continue;
+    const s = swapped(c.id), [a, b] = RATIO[c.id];
+    sub.textContent = `${a}:${b} → ${fmt(s.pulls)} Pulls` + (s.rest ? `, Rest ${fmt(s.rest)}` : '');
+  }
+  $('stdRows').hidden = !S.showStd;
+  $('kumRows').hidden = !S.showKum;
+  $('rowKumStd').hidden = !S.showStd;
+  const ex = [];
+  if (S.showStd) ex.push(`Standard-Verträge <b>${fmt(S.stdVertrag)}</b>`);
+  if (S.showKum) ex.push(`Spezial gesamt <b>${fmt(S.kumSpezial)}</b>`);
+  if (S.showKum && S.showStd) ex.push(`Standard gesamt <b>${fmt(S.kumStd)}</b>`);
+  const gl = goal();
+  $('extras').innerHTML = (gl ? `<span class="goal">${gl}</span>` : '') + ex.map(e => `<span>${e}</span>`).join('');
+  $('extras').hidden = !gl && ex.length === 0;
+}
+function refreshAll() { buildMain(); fillSettings(); render(); renderCollection(); renderLog(); }
+
+/* ===== Online-Speichern (Firebase, Spielername + PIN) =====
+   Der Spielername wird intern in eine Login-Adresse umgewandelt (es wird nie eine E-Mail verschickt),
+   die PIN ist das Passwort. Daten liegen in Firestore unter players/{uid}, nur für den Spieler selbst lesbar. */
+const FB_VER = '10.12.2';
+const Cloud = {
+  fb: null, user: null, acc: null, state: 'off', timer: null, busy: false, again: false, lastSync: 0, manual: false,
+  get enabled() { return !!(FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId); },
+  async init() {
+    this.ui();
+    if (!this.enabled) return;
+    try {
+      const base = `https://www.gstatic.com/firebasejs/${FB_VER}/`;
+      const [appM, authM, fsM] = await Promise.all([
+        import(base + 'firebase-app.js'), import(base + 'firebase-auth.js'), import(base + 'firebase-firestore.js')]);
+      const app = appM.initializeApp(FIREBASE_CONFIG);
+      this.fb = { ...authM, ...fsM, auth: authM.getAuth(app), db: fsM.getFirestore(app) };
+      this.fb.onAuthStateChanged(this.fb.auth, user => {
+        this.user = user;
+        if (!user) { this.acc = null; this.setState('off'); return; }
+        this.acc = this.acc || { name: user.displayName || '' };
+        if (!this.manual) this.pull();
+      });
+    } catch (e) {
+      this.loadFailed = true; this.ui();
+    }
+  },
+  async emailFor(name) {
+    const bytes = new TextEncoder().encode(name.trim().toLowerCase());
+    const hash = await crypto.subtle.digest('SHA-256', bytes);
+    return 'p' + [...new Uint8Array(hash)].slice(0, 20).map(b => b.toString(16).padStart(2, '0')).join('') + '@example.com';
+  },
+  ref() { return this.fb.doc(this.fb.db, 'players', this.user.uid); },
+  setState(s) { this.state = s; this.ui(); },
+  code(e) {
+    const c = (e && (e.code || e.message)) || '';
+    if (/invalid-credential|wrong-password|user-not-found|invalid-email/.test(c)) return 'cred';
+    if (/email-already-in-use/.test(c)) return 'taken';
+    if (/too-many-requests/.test(c)) return 'locked';
+    if (/weak-password/.test(c)) return 'pin';
+    if (/requires-recent-login/.test(c)) return 'recent';
+    if (/permission-denied/.test(c)) return 'perm';
+    if (['name', 'pin', 'size', 'nofb'].includes(c)) return c;
+    return 'net';
+  },
+  errText(code) {
+    return ({ cred: 'Spielername oder PIN stimmt nicht.', taken: 'Der Name ist schon vergeben.',
+      locked: 'Zu viele Versuche. Bitte warte ein paar Minuten.', pin: 'Die PIN muss 6–8 Ziffern haben.',
+      name: 'Name: 3–20 Zeichen, Buchstaben, Zahlen, Leerzeichen, . _ -', size: 'Dein Stand ist zu groß zum Speichern.',
+      recent: 'Bitte melde dich einmal ab und wieder an, dann klappt das Löschen.',
+      perm: 'Keine Berechtigung. Sind die Firestore-Regeln eingetragen?',
+      nofb: 'Online-Speichern konnte nicht geladen werden. Prüfe deine Verbindung und lade die Seite neu.' })[code]
+      || 'Das hat nicht geklappt. Prüfe deine Verbindung.';
+  },
+  check(name, pin) {
+    if (!this.fb) throw new Error('nofb');
+    if (!/^[\p{L}\p{N} _.\-]{3,20}$/u.test(name)) throw new Error('name');
+    if (!/^[0-9]{6,8}$/.test(pin)) throw new Error('pin');
+  },
+  payload() {
+    const data = JSON.stringify(S);
+    if (data.length > 300000) throw new Error('size');
+    return { name: this.acc.name, data, updatedAt: Date.now() };
+  },
+  async login(name, pin) {
+    this.check(name, pin);
+    this.manual = true;
+    try {
+      const cred = await this.fb.signInWithEmailAndPassword(this.fb.auth, await this.emailFor(name), pin);
+      this.user = cred.user;
+      this.acc = { name: cred.user.displayName || name };
+      const snap = await this.fb.getDoc(this.ref());
+      const cloud = snap.exists() ? merge(JSON.parse(snap.data().data || '{}')) : null;
+      if (snap.exists() && snap.data().name) this.acc.name = snap.data().name;
+      let took = 'local';
+      if (cloud && (cloud.savedAt >= S.savedAt || !S.savedAt)) { S = cloud; persist(); refreshAll(); took = 'cloud'; }
+      else await this.push();
+      this.lastSync = Date.now(); this.setState('ok');
+      return took;
+    } finally { this.manual = false; }
+  },
+  async register(name, pin) {
+    this.check(name, pin);
+    this.manual = true;
+    try {
+      const cred = await this.fb.createUserWithEmailAndPassword(this.fb.auth, await this.emailFor(name), pin);
+      this.user = cred.user;
+      this.acc = { name: name.trim() };
+      try { await this.fb.updateProfile(cred.user, { displayName: name.trim() }); } catch (e) { /* nur Anzeige */ }
+      if (!S.savedAt) { S.savedAt = Date.now(); persist(); }
+      await this.push();
+      this.lastSync = Date.now(); this.setState('ok');
+    } finally { this.manual = false; }
+  },
+  async pull() {               // beim Start: neueren Stand übernehmen
+    this.setState('busy');
+    try {
+      const snap = await this.fb.getDoc(this.ref());
+      if (snap.exists() && snap.data().name) this.acc.name = snap.data().name;
+      const cloud = snap.exists() ? merge(JSON.parse(snap.data().data || '{}')) : null;
+      if (cloud && cloud.savedAt > S.savedAt) { S = cloud; persist(); refreshAll(); }
+      else if (!cloud || cloud.savedAt < S.savedAt) await this.push();
+      this.lastSync = Date.now(); this.setState('ok');
+    } catch (e) { this.setState('err'); }
+  },
+  queue() {
+    if (!this.user) return;
+    clearTimeout(this.timer);
+    this.setState('busy');
+    this.timer = setTimeout(() => this.flush(), 1500);
+  },
+  async flush() {
+    if (!this.user) return;
+    if (this.busy) { this.again = true; return; }
+    this.busy = true;
+    try { await this.push(); this.lastSync = Date.now(); this.setState('ok'); }
+    catch (e) { this.setState('err'); }
+    this.busy = false;
+    if (this.again) { this.again = false; this.flush(); }
+  },
+  async push() { await this.fb.setDoc(this.ref(), this.payload()); },
+  async logout() { clearTimeout(this.timer); if (this.fb) await this.fb.signOut(this.fb.auth); this.user = null; this.acc = null; this.setState('off'); },
+  async remove() {
+    clearTimeout(this.timer);
+    await this.fb.deleteDoc(this.ref());
+    await this.fb.deleteUser(this.user);
+    this.user = null; this.acc = null; this.setState('off');
+  },
+  ui() {
+    const on = !!(this.enabled && this.user && this.acc);
+    $('accName').hidden = !on; $('accDot').hidden = !on;
+    if (on) {
+      $('accName').textContent = this.acc.name;
+      $('accDot').className = 'dot' + ({ ok: ' ok', busy: ' busy', err: ' err' }[this.state] || '');
+    }
+    $('accOff').hidden = this.enabled;
+    $('accOut').hidden = !this.enabled || on;
+    $('accIn').hidden = !on;
+    if (this.loadFailed) msg($('accMsg'), this.errText('nofb'), 'err');
+    if (on) {
+      $('accWho').textContent = this.acc.name;
+      $('accSync').textContent = this.state === 'busy' ? 'Speichert …'
+        : this.state === 'err' ? 'Gerade keine Verbindung. Dein Stand ist auf dem Gerät gespeichert und wird später hochgeladen.'
+        : this.lastSync ? `Online gespeichert um ${new Date(this.lastSync).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr.` : '';
+    }
+  }
+};
+
+let accMode = 'login';
+document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => {
+  accMode = b.dataset.mode;
+  document.querySelectorAll('[data-mode]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  $('accSubmit').textContent = accMode === 'login' ? 'Anmelden' : 'Registrieren';
+  $('accPin').autocomplete = accMode === 'login' ? 'current-password' : 'new-password';
+  $('accHint').textContent = accMode === 'login'
+    ? 'Melde dich an, um deinen Stand online zu speichern und auf jedem Gerät weiterzumachen.'
+    : 'Dein aktueller Stand auf diesem Gerät wird in das neue Konto übernommen.';
+  msg($('accMsg'), '');
+}));
+$('accForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const name = $('accUser').value.trim(), pin = $('accPin').value.trim();
+  $('accSubmit').disabled = true;
+  msg($('accMsg'), accMode === 'login' ? 'Melde an …' : 'Lege Konto an …');
+  try {
+    if (accMode === 'login') {
+      const took = await Cloud.login(name, pin);
+      msg($('accInMsg'), took === 'cloud' ? 'Angemeldet. Dein Online-Stand wurde geladen.' : 'Angemeldet. Dein Stand von diesem Gerät wurde hochgeladen.', 'ok');
+    } else {
+      await Cloud.register(name, pin);
+      msg($('accInMsg'), 'Konto angelegt. Dein Stand wird ab jetzt online gespeichert.', 'ok');
+    }
+    $('accForm').reset(); msg($('accMsg'), '');
+  } catch (err) {
+    msg($('accMsg'), Cloud.errText(Cloud.code(err)), 'err');
+  }
+  $('accSubmit').disabled = false;
+});
+$('accSyncNow').addEventListener('click', () => { clearTimeout(Cloud.timer); Cloud.setState('busy'); Cloud.flush(); });
+$('accLogout').addEventListener('click', async () => { await Cloud.logout(); msg($('accMsg'), 'Abgemeldet. Dein Stand bleibt auf diesem Gerät.', 'ok'); });
+let delArmed = false;
+$('accDelete').addEventListener('click', async () => {
+  if (!delArmed) {
+    delArmed = true; $('accDelete').textContent = 'Wirklich löschen? Nochmal tippen';
+    setTimeout(() => { delArmed = false; $('accDelete').textContent = 'Konto löschen'; }, 4000);
+    return;
+  }
+  delArmed = false; $('accDelete').textContent = 'Konto löschen';
+  try { await Cloud.remove(); msg($('accMsg'), 'Konto gelöscht. Dein Stand bleibt auf diesem Gerät.', 'ok'); }
+  catch (err) { msg($('accInMsg'), Cloud.errText(Cloud.code(err)), 'err'); }
+});
+
+/* ===== Navigation ===== */
+const VIEWS = { rechner: 'vCalc', sammlung: 'vCol', logbuch: 'vLog' };
+function showView(name) {
+  if (!VIEWS[name]) name = 'rechner';
+  for (const [k, id] of Object.entries(VIEWS)) $(id).hidden = k !== name;
+  document.querySelectorAll('nav.tabs button').forEach(b => {
+    if (b.dataset.view === name) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  });
+  if (name === 'logbuch') prefillLog();
+  if (name === 'rechner') render();
+}
+document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => {
+  if (location.hash !== '#' + b.dataset.view) location.hash = b.dataset.view; else showView(b.dataset.view);
+}));
+window.addEventListener('hashchange', () => showView(location.hash.slice(1)));
+
+const app = $('app');
+function openSheet(id) {
+  document.querySelectorAll('.sheet').forEach(sh => sh.classList.toggle('show', sh.id === id));
+  app.classList.add('open');
+}
+function closeSheets() {
+  document.querySelectorAll('.sheet').forEach(sh => sh.classList.remove('show'));
+  app.classList.remove('open');
+}
+$('openSet').addEventListener('click', () => { msg($('ioMsg'), ''); msg($('resetMsg'), ''); openSheet('sheetSet'); });
+$('openAcc').addEventListener('click', () => { Cloud.ui(); openSheet('sheetAcc'); });
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeSheets));
+$('sheetBg').addEventListener('click', closeSheets);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheets(); });
+
+/* ===== Spielstand-Code ===== */
+function toCode(obj) {
+  const bytes = new TextEncoder().encode(JSON.stringify(obj));
+  let bin = ''; bytes.forEach(b => { bin += String.fromCharCode(b); });
+  return CODE_PREFIX + btoa(bin);
+}
+function fromCode(code) {
+  let s = code.trim().replace(/\s+/g, '');
+  if (s.startsWith(CODE_PREFIX)) s = s.slice(CODE_PREFIX.length);
+  const bytes = Uint8Array.from(atob(s), ch => ch.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+$('ioExport').addEventListener('click', async () => {
+  const code = toCode(S), ta = $('ioCode');
+  ta.value = code;
+  try { await navigator.clipboard.writeText(code); msg($('ioMsg'), 'Code kopiert. Du kannst ihn jetzt irgendwo einfügen.', 'ok'); }
+  catch (e) { ta.focus(); ta.select(); msg($('ioMsg'), 'Kopieren wurde blockiert. Der Code ist markiert, kopiere ihn bitte von Hand.', 'err'); }
+});
+$('ioImport').addEventListener('click', () => {
+  const code = $('ioCode').value;
+  if (!code.trim()) { msg($('ioMsg'), 'Bitte zuerst einen Code einfügen.', 'err'); return; }
+  try { S = merge(fromCode(code)); save(); refreshAll(); msg($('ioMsg'), 'Spielstand geladen.', 'ok'); }
+  catch (e) { msg($('ioMsg'), 'Der Code ist ungültig oder unvollständig.', 'err'); }
+});
+let resetArmed = false;
+$('resetBtn').addEventListener('click', () => {
+  if (!resetArmed) {
+    resetArmed = true; $('resetBtn').textContent = 'Wirklich zurücksetzen? Nochmal tippen';
+    msg($('resetMsg'), Cloud.user ? 'Achtung: Auch dein Online-Stand wird überschrieben.' : 'Tipp vorher auf „Code erzeugen“, wenn du deinen Stand behalten willst.', 'err');
+    setTimeout(() => { resetArmed = false; $('resetBtn').textContent = 'Alles auf Standard zurücksetzen'; }, 4000);
+    return;
+  }
+  resetArmed = false;
+  S = defaults(); save(); refreshAll();
+  $('resetBtn').textContent = 'Alles auf Standard zurücksetzen';
+  msg($('resetMsg'), 'Zurückgesetzt.', 'ok');
+});
+
+/* ===== Start ===== */
+buildSettings();
+refreshAll();
+showView(location.hash.slice(1));
+Cloud.init();
+loadChars();
+</script>
+</body>
+</html>

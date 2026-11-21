@@ -240,7 +240,9 @@
   .cl .kind.major{border-color:var(--ac);color:var(--tx)}
   .cl ul{margin:0;padding-left:18px;font-size:13px;line-height:1.45;color:#d6d6d6}
   .cl li+li{margin-top:3px}
-  @media (max-width:400px){ .acc-name{display:none} }
+  @media (max-width:460px){ .acc-name{display:none} }
+  h1{white-space:nowrap}
+  @media (max-width:390px){ h1{font-size:19px} h1 small{font-size:10.5px} .hbtns{gap:6px} .icon-btn{min-width:34px;height:34px;padding:0 7px} .icon-btn svg{width:18px;height:18px} }
   @media (max-height:700px){ .saverow .btn{height:36px;font-size:13.5px} }
   .info-btn{display:inline-grid;place-items:center;width:18px;height:18px;margin-left:6px;border-radius:50%;border:1.5px solid var(--mu);background:none;color:var(--tx);
     font:700 11px/1 Georgia,serif;font-style:italic;cursor:pointer;vertical-align:1px;padding:0}
@@ -248,6 +250,23 @@
   .info-btn{position:relative}
   .pop{position:absolute;z-index:8;max-width:280px;background:#f5f5f5;color:#0c0c0c;border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.4;box-shadow:0 10px 30px #000a}
   .pop::before{content:"";position:absolute;top:-6px;left:var(--ax,24px);width:12px;height:12px;background:#f5f5f5;transform:rotate(45deg)}
+  .frform{display:grid;grid-template-columns:1fr auto;gap:8px}
+  .frform input{font-weight:500}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .chip{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:99px;background:#141414;overflow:hidden}
+  .chip button{background:none;border:0;color:var(--tx);font:600 13px Inter,sans-serif;padding:6px 4px 6px 12px;cursor:pointer}
+  .chip .chip-x{color:var(--mu);padding:6px 10px 6px 6px;font-size:15px}
+  table.cmp{width:100%;border-collapse:collapse;font-size:14px}
+  table.cmp th,table.cmp td{padding:7px 4px;border-top:1px solid var(--line);text-align:right;font-weight:500}
+  table.cmp thead th{border-top:0;color:var(--mu);font-size:12px;font-weight:600;padding-top:0}
+  table.cmp tbody th{text-align:left;color:var(--mu);font-weight:500}
+  table.cmp td{width:28%;font-variant-numeric:tabular-nums}
+  table.cmp td.win{color:var(--tx);font-weight:700}
+  table.cmp td.win::before{content:"▲ ";font-size:9px;vertical-align:1px}
+  table.cmp.chars td{text-align:center}
+  table.cmp.chars tbody th{color:var(--tx)}
+  table.cmp .mu{color:var(--mu)}
+  table.cmp s{color:var(--mu)}
   [hidden]{display:none!important}
 </style>
 </head>
@@ -256,6 +275,9 @@
   <header>
     <h1>Pull-Rechner<small>Monster Hunter Outlands</small></h1>
     <div class="hbtns">
+      <button class="icon-btn" id="openFr" aria-label="Mit Freunden vergleichen">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.6 3.5-5.5 6.5-5.5s5.5 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.8"/><path d="M16.5 14.6c2.6.2 4.3 1.9 5 4.9"/></svg>
+      </button>
       <button class="icon-btn" id="openCol" aria-label="Sammlung öffnen">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>
       </button>
@@ -346,6 +368,26 @@
     </div>
   </div>
 
+  <!-- ===== Freunde ===== -->
+  <div class="sheet" id="sheetFr" role="dialog" aria-modal="true" aria-labelledby="frTitle">
+    <div class="sheet-hd">
+      <h2 id="frTitle">Freunde</h2>
+      <button class="icon-btn" data-close aria-label="Freunde schließen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="sheet-bd">
+      <section class="card">
+        <form id="frForm" class="frform" autocomplete="off">
+          <input type="text" id="frName" placeholder="Spielername" maxlength="20" required aria-label="Spielername deines Freundes">
+          <button class="btn pri" type="submit" id="frGo">Vergleichen</button>
+        </form>
+        <div class="chips" id="frChips"></div>
+        <p class="msg" id="frMsg"></p>
+      </section>
+      <div id="frResult"></div>
+      <p class="note" id="frNote"></p>
+    </div>
+  </div>
+
   <!-- ===== Changelog ===== -->
   <div class="sheet" id="sheetCl" role="dialog" aria-modal="true" aria-labelledby="clTitle">
     <div class="sheet-hd">
@@ -404,6 +446,11 @@
         <h2>Umtauschen</h2>
         <div id="swapList"></div>
         <p class="note">Haken = Währung wird umgetauscht und erscheint auf dem Hauptbildschirm.</p>
+      </section>
+      <section class="card">
+        <h2>Freunde</h2>
+        <div class="tgl"><span>Meine Werte teilen<small>Freunde sehen deine Pulls, Chance und Sammlung, wenn sie deinen Spielernamen eingeben</small></span><label class="sw"><input type="checkbox" id="optShare"><i></i></label></div>
+        <p class="note" id="shareNote" style="margin-top:2px"></p>
       </section>
       <section class="card">
         <h2>Zusätzliche Werte</h2>
@@ -537,7 +584,7 @@ function defaults() {
     spezial: 0, pity: 0, stdVertrag: 0, kumSpezial: 0, kumStd: 0,
     cur:  { ppf: 0, ruta: 0, gut: 0 },
     swap: { ppf: true, ruta: true, gut: true },
-    showStd: false, showKum: false, lost: false,
+    showStd: false, showKum: false, lost: false, share: true, friends: [],
     status: {}, pulledAt: {}, hist: [],
     savedAt: 0
   };
@@ -552,7 +599,8 @@ function merge(o) {
     if (o.cur) d.cur[c.id] = num(o.cur[c.id], 0);
     if (o.swap && typeof o.swap[c.id] === 'boolean') d.swap[c.id] = o.swap[c.id];
   }
-  for (const k of ['showStd', 'showKum', 'lost']) if (typeof o[k] === 'boolean') d[k] = o[k];
+  for (const k of ['showStd', 'showKum', 'lost', 'share']) if (typeof o[k] === 'boolean') d[k] = o[k];
+  if (Array.isArray(o.friends)) d.friends = [...new Set(o.friends.filter(f => typeof f === 'string' && f.trim()).map(f => f.trim().slice(0, 20)))].slice(0, 20);
   if (o.status && typeof o.status === 'object')
     for (const [k, v] of Object.entries(o.status)) if (['pulled', 'save', 'skip'].includes(v)) d.status[String(k).slice(0, 40)] = v;
   if (o.pulledAt && typeof o.pulledAt === 'object')
@@ -709,6 +757,11 @@ function buildSettings() {
     $(id).addEventListener('input', () => { S[k] = toInt($(id).value); save(); render(); });
   $('optStd').addEventListener('change', e => { S.showStd = e.target.checked; save(); render(); });
   $('optKum').addEventListener('change', e => { S.showKum = e.target.checked; save(); render(); });
+  $('optShare').addEventListener('change', e => { S.share = e.target.checked; save(); shareNote(); if (!S.share) Cloud.unshare(); });
+}
+function shareNote() {
+  $('shareNote').textContent = !Cloud.enabled ? '' : !Cloud.user ? 'Zum Teilen brauchst du ein Konto (Personen-Symbol oben).'
+    : S.share ? `Freunde finden dich unter „${Cloud.acc.name}“.` : 'Deine Werte sind für andere nicht sichtbar.';
 }
 function fillSettings() {
   for (const c of CURRENCIES) $('sw_' + c.id).checked = S.swap[c.id];
@@ -716,6 +769,8 @@ function fillSettings() {
   $('inKumSpezial').value = S.kumSpezial || '';
   $('inKumStd').value = S.kumStd || '';
   $('optStd').checked = S.showStd; $('optKum').checked = S.showKum;
+  $('optShare').checked = S.share;
+  shareNote();
 }
 
 /* ===== Charaktere aus Google Sheets ===== */
@@ -1022,7 +1077,7 @@ const Cloud = {
     return 'p' + [...new Uint8Array(hash)].slice(0, 20).map(b => b.toString(16).padStart(2, '0')).join('') + '@example.com';
   },
   ref() { return this.fb.doc(this.fb.db, 'players', this.user.uid); },
-  setState(s) { this.state = s; this.ui(); },
+  setState(s) { this.state = s; this.ui(); try { shareNote(); } catch (e) { /* noch nicht bereit */ } },
   code(e) {
     const c = (e && (e.code || e.message)) || '';
     if (/invalid-credential|wrong-password|user-not-found|invalid-email/.test(c)) return 'cred';
@@ -1109,10 +1164,35 @@ const Cloud = {
     this.busy = false;
     if (this.again) { this.again = false; this.flush(); }
   },
-  async push() { await this.fb.setDoc(this.ref(), this.payload()); },
+  async push() {
+    await this.fb.setDoc(this.ref(), this.payload());
+    if (S.share) await this.publish(); else await this.unshare();
+  },
+  // Öffentliches Profil für den Freunde-Vergleich: profiles/{Login-ID}, nur der Besitzer darf schreiben
+  async pid(name) { return (await this.emailFor(name)).split('@')[0]; },
+  async publish() {
+    if (!this.user || !this.user.email) return;
+    const id = this.user.email.split('@')[0];
+    try {
+      await this.fb.setDoc(this.fb.doc(this.fb.db, 'profiles', id), { name: this.acc.name, stats: JSON.stringify(sharedStats()), updatedAt: Date.now() });
+      this.shared = true;
+    } catch (e) { /* Regeln evtl. noch nicht eingetragen: Speichern des Stands soll trotzdem klappen */ }
+  },
+  async unshare() {
+    if (!this.user || !this.user.email || this.shared === false) return;
+    try { await this.fb.deleteDoc(this.fb.doc(this.fb.db, 'profiles', this.user.email.split('@')[0])); this.shared = false; } catch (e) { /* egal */ }
+  },
+  async lookup(name) {
+    if (!this.fb) throw new Error('nofb');
+    const snap = await this.fb.getDoc(this.fb.doc(this.fb.db, 'profiles', await this.pid(name)));
+    if (!snap.exists()) return null;
+    const d = snap.data();
+    return { name: d.name, updatedAt: d.updatedAt, stats: JSON.parse(d.stats || '{}') };
+  },
   async logout() { clearTimeout(this.timer); if (this.fb) await this.fb.signOut(this.fb.auth); this.user = null; this.acc = null; this.setState('off'); },
   async remove() {
     clearTimeout(this.timer);
+    this.shared = true; await this.unshare();
     await this.fb.deleteDoc(this.ref());
     await this.fb.deleteUser(this.user);
     this.user = null; this.acc = null; this.setState('off');
@@ -1214,6 +1294,78 @@ $('resetBtn').addEventListener('click', () => {
   msg($('resetMsg'), 'Zurückgesetzt.', 'ok');
 });
 
+/* ===== Freunde-Vergleich ===== */
+function sharedStats() {
+  const pulls = totalPulls(), pr = progress(S.pity + pulls);
+  return { v: 1, pulls, pity: S.pity, lost: S.lost, chance: Math.round(pr.ch * 10) / 10, extra: pr.extra,
+    status: S.status, hist: S.hist.slice(-120), savedAt: S.savedAt };
+}
+function renderChips() {
+  $('frChips').innerHTML = S.friends.map(f => `<span class="chip"><button type="button" data-fr="${esc(f)}">${esc(f)}</button><button type="button" class="chip-x" data-frdel="${esc(f)}" aria-label="${esc(f)} entfernen">×</button></span>`).join('');
+}
+function frNote() {
+  $('frNote').textContent = !Cloud.enabled ? 'Der Vergleich braucht das Online-Speichern.'
+    : !Cloud.user ? 'Tipp: Mit eigenem Konto können Freunde dich auch finden.'
+    : S.share ? `Du bist für Freunde unter „${Cloud.acc.name}“ sichtbar.` : 'Du teilst deine Werte gerade nicht (Einstellungen → Freunde).';
+}
+async function compareWith(name) {
+  name = name.trim();
+  if (!name) return;
+  msg($('frMsg'), 'Suche …'); $('frResult').innerHTML = '';
+  try {
+    if (Cloud.user && Cloud.acc && name.toLowerCase() === Cloud.acc.name.toLowerCase()) { msg($('frMsg'), 'Das bist du selbst 🙂', 'err'); return; }
+    const fr = await Cloud.lookup(name);
+    if (!fr) { msg($('frMsg'), `„${name}“ gibt es nicht oder teilt keine Werte.`, 'err'); return; }
+    msg($('frMsg'), '');
+    S.friends = [fr.name, ...S.friends.filter(f => f.toLowerCase() !== fr.name.toLowerCase())].slice(0, 20);
+    save(); renderChips();
+    renderCompare(fr);
+  } catch (e) { msg($('frMsg'), Cloud.errText(Cloud.code(e)), 'err'); }
+}
+function renderCompare(fr) {
+  const me = sharedStats(), f = fr.stats || {};
+  const list = allChars(), sp = list.filter(c => c.type === 'Spezial');
+  const cnt = (st, arr) => arr.filter(c => (st || {})[c.id] === 'pulled').length;
+  const goalOf = st => { const g = sp.find(c => (st || {})[c.id] === 'save' && phase(c, todayISO()) !== 'past'); return g ? g.name : '–'; };
+  const rows = [
+    ['Spezial-Pulls', me.pulls, f.pulls ?? 0, fmt],
+    ['Pity', me.pity, f.pity ?? 0, fmt],
+    ['Chance', me.chance, f.chance ?? 0, v => pct(v)],
+    ['SSR gezogen', cnt(me.status, list), cnt(f.status, list), v => `${v} / ${list.length}`],
+    ['Spezial gezogen', cnt(me.status, sp), cnt(f.status, sp), v => `${v} / ${sp.length}`]
+  ];
+  const cell = (a, b, fn) => `<td class="${a > b ? 'win' : ''}">${fn(a)}</td><td class="${b > a ? 'win' : ''}">${fn(b)}</td>`;
+  const mark = st => st === 'pulled' ? '<b>✓</b>' : st === 'save' ? '★' : st === 'skip' ? '<s>Skip</s>' : '<span class="mu">–</span>';
+  const when = fr.updatedAt ? new Date(fr.updatedAt).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+  $('frResult').innerHTML = `
+    <section class="card">
+      <h2>Du vs. ${esc(fr.name)}</h2>
+      <table class="cmp">
+        <thead><tr><th></th><th>Du</th><th>${esc(fr.name)}</th></tr></thead>
+        <tbody>${rows.map(([l, a, b, fn]) => `<tr><th>${l}</th>${cell(a, b, fn)}</tr>`).join('')}
+          <tr><th>Spar-Ziel</th><td>${esc(goalOf(me.status))}</td><td>${esc(goalOf(f.status))}</td></tr>
+          ${f.lost ? `<tr><th>50/50</th><td>${me.lost ? 'verloren' : '–'}</td><td>verloren</td></tr>` : ''}
+        </tbody>
+      </table>
+      ${when ? `<p class="note">Stand von ${esc(fr.name)}: ${when} Uhr</p>` : ''}
+    </section>
+    <section class="card">
+      <h2>Sammlung im Vergleich</h2>
+      <table class="cmp chars">
+        <thead><tr><th></th><th>Du</th><th>${esc(fr.name)}</th></tr></thead>
+        <tbody>${list.map(c => `<tr><th>${esc(c.name)}${c.type === 'Spezial' ? ' <span class="tag sp">Spezial</span>' : ''}</th><td>${mark((me.status || {})[c.id])}</td><td>${mark((f.status || {})[c.id])}</td></tr>`).join('')}</tbody>
+      </table>
+    </section>`;
+}
+$('frForm').addEventListener('submit', e => { e.preventDefault(); compareWith($('frName').value); });
+$('frChips').addEventListener('click', e => {
+  const del = e.target.closest('[data-frdel]');
+  if (del) { S.friends = S.friends.filter(f => f !== del.dataset.frdel); save(); renderChips(); return; }
+  const b = e.target.closest('[data-fr]');
+  if (b) { $('frName').value = b.dataset.fr; compareWith(b.dataset.fr); }
+});
+$('openFr').addEventListener('click', () => { renderChips(); frNote(); openSheet('sheetFr'); });
+
 /* ===== Info-Hinweis ===== */
 function showInfo(btn) {
   const c = CURRENCIES.find(x => x.id === btn.dataset.info);
@@ -1241,6 +1393,11 @@ document.addEventListener('click', e => {
    Versionsnummer: große Änderung = erste Zahl (Major), kleine Änderung = zweite Zahl (Minor).
    Build = wie oft die Seite insgesamt bearbeitet wurde. Bei jeder Änderung oben einen Eintrag ergänzen. */
 const CHANGELOG = [
+  { v: '3.0', build: 16, date: '21.11.2026', kind: 'Major', items: [
+    'Neu: Mit Freunden vergleichen (Personen-Symbol oben): Spielername eingeben, Pulls, Chance und Sammlung nebeneinander sehen',
+    'Einstellung „Meine Werte teilen“, standardmäßig an (braucht ein Konto)',
+    'Zuletzt verglichene Freunde werden gemerkt und lassen sich mit einem Tipp erneut öffnen'
+  ]},
   { v: '2.6', build: 15, date: '21.11.2026', kind: 'Minor', items: [
     'Verlauf startet immer am Release-Tag 29.10.2026 mit 0 Pulls',
     'Neue README für das GitHub-Repo'

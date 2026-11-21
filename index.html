@@ -127,6 +127,28 @@
   .got-date{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--mu)}
   .got-date input{height:34px;font-size:14px;flex:1}
   .del{background:none;border:0;color:var(--mu);font-size:18px;cursor:pointer;width:26px;height:26px}
+  .t-grp{margin-bottom:12px}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .tile{position:relative;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;min-height:92px;padding:9px 9px 8px;border-radius:12px;
+    border:1px solid var(--line);background:var(--card);cursor:pointer;user-select:none;-webkit-user-select:none;transition:background .15s,transform .1s;text-align:left}
+  .tile:active{transform:scale(.97)}
+  .tile:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+  .t-name{font:700 19px/1 'Barlow Condensed',sans-serif;letter-spacing:.3px;word-break:break-word}
+  .t-info{font-size:10.5px;color:var(--mu);line-height:1.25}
+  .t-foot{font-size:11px;font-weight:600;color:var(--mu);margin-top:4px}
+  .t-tag{position:absolute;top:7px;left:8px;font:600 9px Inter,sans-serif;letter-spacing:.4px;text-transform:uppercase;color:var(--mu)}
+  .tile.sp{padding-top:22px}
+  .tile.live .t-tag::after{content:" · live";color:var(--tx)}
+  .t-del{position:absolute;top:2px;right:2px;width:24px;height:24px;border:0;background:none;color:var(--mu);font-size:16px;cursor:pointer}
+  .tile.st-pulled{background:var(--ac);border-color:var(--ac)}
+  .tile.st-pulled .t-name,.tile.st-pulled .t-foot{color:#0c0c0c}
+  .tile.st-pulled .t-info,.tile.st-pulled .t-tag,.tile.st-pulled .t-del{color:#555}
+  .tile.st-pulled.live .t-tag::after{color:#0c0c0c}
+  .tile.st-save{border:1.5px dashed var(--ac);background:#1f1f1f}
+  .tile.st-save .t-foot{color:var(--tx)}
+  .tile.st-skip{opacity:.45}
+  .tile.st-skip .t-name{text-decoration:line-through}
+  .legend{font-size:11.5px;color:var(--mu);margin-top:8px}
   details.add summary{cursor:pointer;list-style:none;font:700 14px/1 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.2px;color:var(--mu)}
   details.add summary::-webkit-details-marker{display:none}
   details.add summary::before{content:"+ "}
@@ -257,8 +279,9 @@
       <div class="card">
         <div class="sum"><div><b id="colCount">0 / 0</b><div class="big-lbl" style="text-align:left">SSR gezogen</div></div><span id="colSpez"></span></div>
         <div class="sumbar"><i id="colBar"></i></div>
+        <p class="legend">Tippe auf einen Charakter: Gezogen → Sparen → Skip → zurück. Standard-Charaktere: einfach an/aus.</p>
       </div>
-      <div class="tl" id="timeline"></div>
+      <div id="timeline"></div>
       <div class="card">
         <details class="add">
           <summary>Charakter selbst hinzufügen</summary>
@@ -787,44 +810,43 @@ function renderCollection() {
   $('timeline').innerHTML = groups.map(g => {
     const ver = [...new Set(g.items.map(c => c.ver).filter(Boolean))].join(' / ');
     const soon = g.start > today;
-    const live = g.items.some(c => c.type === 'Spezial' && phase(c, today) === 'live');
-    return `<div class="tl-grp${live ? ' now' : ''}">
-      <div class="tl-date"><b>${dDE(g.start)}</b>${ver ? ' · Version ' + esc(ver) : ''}${soon ? ' · kommt' : ''}</div>
-      ${g.items.map(c => charCard(c, today)).join('')}
+    return `<div class="t-grp">
+      <div class="tl-date"><b>${dDE(g.start)}</b>${ver ? ' · ' + (/^\d/.test(ver) ? 'Version ' : '') + esc(ver) : ''}${soon ? ' · kommt' : ''}</div>
+      <div class="tiles">${g.items.map(c => tile(c, today)).join('')}</div>
     </div>`;
   }).join('');
 }
-function charCard(c, today) {
-  const st = S.status[c.id] || '', ph = phase(c, today), isSp = c.type === 'Spezial';
-  let pill = '';
-  if (isSp) {
-    if (ph === 'live') pill = `<span class="pill live">Läuft${c.end ? ' · noch ' + Math.max(0, daysBetween(today, c.end)) + ' T.' : ''}</span>`;
-    else if (ph === 'soon') pill = `<span class="pill">in ${daysBetween(today, c.start)} Tagen</span>`;
-    else pill = '<span class="pill">Vorbei</span>';
+const ST_LABEL = { pulled: '✓ Gezogen', save: '★ Sparen', skip: 'Skip' };
+function tile(c, today) {
+  const st = S.status[c.id] || '', isSp = c.type === 'Spezial', ph = phase(c, today);
+  let foot = ST_LABEL[st];
+  if (!foot) {
+    if (!isSp) foot = 'nicht gezogen';
+    else if (ph === 'live') foot = 'läuft' + (c.end ? ` · ${Math.max(0, daysBetween(today, c.end))} T.` : '');
+    else if (ph === 'soon') foot = `ab ${dDE(c.start).slice(0, 6)}`;
+    else foot = 'vorbei';
   }
-  const end = c.end ? (c.endUnsure ? `(${dDE(c.end)})` : dDE(c.end)) : 'offen';
-  const meta = [c.info ? esc(c.info) : '', isSp ? `<b>${dDE(c.start)} – ${end}</b>` : ''].filter(Boolean).join('<br>');
-  const opts = isSp ? [['pulled', 'Gezogen'], ['save', 'Sparen'], ['skip', 'Skip']] : [['pulled', 'Gezogen']];
-  if (!isSp) return `<article class="chr compact${st === 'pulled' ? ' got' : ''}">
-    <div class="chr-top">
-      <span class="chr-name">${esc(c.name)}<span class="tag">Standard</span></span>
-      <span class="chr-act">${c.custom ? `<button class="del" data-del="${c.id}" aria-label="${esc(c.name)} löschen">×</button>` : ''}
-        <button type="button" class="tog" data-chr="${c.id}" data-st="pulled" aria-pressed="${st === 'pulled'}">${st === 'pulled' ? '✓ Gezogen' : 'Gezogen?'}</button></span>
-    </div>
-    ${c.info ? `<div class="chr-meta">${esc(c.info)}</div>` : ''}
-    ${st === 'pulled' ? `<label class="got-date">Gezogen am<input type="date" data-date="${c.id}" value="${S.pulledAt[c.id] || ''}" max="${today}"></label>` : ''}
-  </article>`;
-  return `<article class="chr${st === 'pulled' ? ' got' : ''}">
-    <div class="chr-top">
-      <span class="chr-name">${esc(c.name)}<span class="tag${isSp ? ' sp' : ''}">${isSp ? 'Spezial' : 'Standard'}</span></span>
-      <span>${pill}${c.custom ? `<button class="del" data-del="${c.id}" aria-label="${esc(c.name)} löschen">×</button>` : ''}</span>
-    </div>
-    ${meta ? `<div class="chr-meta">${meta}</div>` : ''}
-    <div class="seg${isSp ? '' : ' one'}" role="group" aria-label="Status für ${esc(c.name)}">
-      ${opts.map(([k, l]) => `<button type="button" data-chr="${c.id}" data-st="${k}" aria-pressed="${st === k}">${l}</button>`).join('')}
-    </div>
-    ${st === 'pulled' ? `<label class="got-date">Gezogen am<input type="date" data-date="${c.id}" value="${S.pulledAt[c.id] || ''}" max="${today}"></label>` : ''}
-  </article>`;
+  const info = (c.info || '').split('·').slice(0, 2).map(t => t.trim()).filter(Boolean).join(' · ');
+  const next = { '': 'Gezogen', pulled: isSp ? 'Sparen' : 'nicht gezogen', save: 'Skip', skip: 'kein Status' }[st];
+  return `<div class="tile${st ? ' st-' + st : ''}${isSp ? ' sp' : ''}${ph === 'live' && isSp ? ' live' : ''}" role="button" tabindex="0" data-tile="${c.id}"
+      aria-label="${esc(c.name)}, ${isSp ? 'Spezial' : 'Standard'}, ${ST_LABEL[st] || 'kein Status'}. Tippen für ${next}.">
+    ${isSp ? '<span class="t-tag">Spezial</span>' : ''}
+    ${c.custom ? `<button class="t-del" data-del="${c.id}" aria-label="${esc(c.name)} löschen">×</button>` : ''}
+    <span class="t-name">${esc(c.name)}</span>
+    ${info ? `<span class="t-info">${esc(info)}</span>` : ''}
+    <span class="t-foot">${foot}</span>
+  </div>`;
+}
+function cycleStatus(id) {
+  const c = allChars().find(x => x.id === id);
+  if (!c) return;
+  const order = c.type === 'Spezial' ? ['', 'pulled', 'save', 'skip'] : ['', 'pulled'];
+  const nxt = order[(order.indexOf(S.status[id] || '') + 1) % order.length];
+  if (nxt) S.status[id] = nxt; else delete S.status[id];
+  if (nxt === 'pulled') S.pulledAt[id] = S.pulledAt[id] || todayISO(); else delete S.pulledAt[id];
+  save(); renderCollection(); render();
+  const el = document.querySelector(`[data-tile="${id}"]`);
+  if (el) el.focus({ preventScroll: true });
 }
 $('timeline').addEventListener('click', e => {
   const del = e.target.closest('[data-del]');
@@ -833,22 +855,12 @@ $('timeline').addEventListener('click', e => {
     S.custom = S.custom.filter(c => c.id !== id); delete S.status[id]; delete S.pulledAt[id];
     save(); renderCollection(); render(); return;
   }
-  const b = e.target.closest('[data-st]');
-  if (!b) return;
-  const id = b.dataset.chr, st = b.dataset.st;
-  if (S.status[id] === st) { delete S.status[id]; if (st === 'pulled') delete S.pulledAt[id]; }
-  else {
-    S.status[id] = st;
-    if (st === 'pulled' && !S.pulledAt[id]) S.pulledAt[id] = todayISO();
-    if (st !== 'pulled') delete S.pulledAt[id];
-  }
-  save(); renderCollection(); render();
+  const t = e.target.closest('[data-tile]');
+  if (t) cycleStatus(t.dataset.tile);
 });
-$('timeline').addEventListener('change', e => {
-  const inp = e.target.closest('[data-date]');
-  if (!inp) return;
-  if (ISO_RE.test(inp.value)) S.pulledAt[inp.dataset.date] = inp.value; else delete S.pulledAt[inp.dataset.date];
-  save(); renderLog();
+$('timeline').addEventListener('keydown', e => {
+  const t = e.target.closest('[data-tile]');
+  if (t && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); cycleStatus(t.dataset.tile); }
 });
 let addType = 'Spezial';
 document.querySelectorAll('[data-type]').forEach(b => b.addEventListener('click', () => {

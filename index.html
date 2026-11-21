@@ -167,6 +167,7 @@
   .loglist{list-style:none;display:flex;flex-direction:column;gap:6px}
   .loglist li{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;background:#141414;border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:14px}
   .loglist .d{color:var(--mu)} .loglist .p{font-weight:600} .loglist .c{font-weight:600;min-width:52px;text-align:right}
+  .loglist li.rel{opacity:.7}
   .empty{color:var(--mu);font-size:13px;text-align:center;padding:14px 0}
 
   /* Sheets */
@@ -335,7 +336,7 @@
       <div class="card">
         <h2>Spezial-Pulls im Zeitverlauf</h2>
         <svg class="chart" id="logChart" viewBox="0 0 320 150" role="img" aria-label="Pulls im Zeitverlauf"></svg>
-        <p class="empty" id="logEmpty">Noch keine Einträge. Tippe auf der Hauptseite auf „Heutigen Stand speichern“.</p>
+        <p class="empty" id="logEmpty">Bisher nur der Release-Tag. Tippe auf der Hauptseite auf „Heutigen Stand speichern“.</p>
       </div>
       <div class="card">
         <h2>Einträge</h2>
@@ -465,6 +466,7 @@ const CODE_PREFIX = 'MHO1-';
 const RATIO = { ppf: [150, 1], ruta: [150, 1], gut: [50, 1] };
 const THR = [[90, 50], [120, 100]];
 const LOST_LEN = THR[0][0];
+const RELEASE = '2026-10-29';   // Release von Monster Hunter Outlands: fester Startpunkt im Verlauf mit 0 Pulls
 
 const ICONS = {
   // Spezial-Vertrag: roter Briefumschlag, Rückseite mit Klappe und Siegel
@@ -891,9 +893,10 @@ function smoothPath(pts) {   // monotone kubische Kurve, keine Ausreißer nach o
 }
 function renderLog() {
   const svg = $('logChart'); svg.innerHTML = '';
-  const H = S.hist;
-  $('logEmpty').hidden = H.length > 0;
-  svg.style.display = H.length ? '' : 'none';
+  // Release-Tag immer als Startpunkt mit 0 Pulls (nicht löschbar, wird nicht gespeichert)
+  const H = [{ d: RELEASE, p: 0, c: 0, rel: true }, ...S.hist.filter(h => h.d > RELEASE)];
+  $('logEmpty').hidden = H.length > 1;
+  svg.style.display = '';
   if (H.length) {
     const X0 = 34, X1 = 308, Y0 = 22, Y1 = 124;
     const t0 = Date.parse(H[0].d), t1 = Date.parse(H[H.length - 1].d);
@@ -926,10 +929,10 @@ function renderLog() {
     svgEl('text', { x: X0, y: Y1 + 16, 'text-anchor': 'start' }, svg, dDE(H[0].d).slice(0, 6));
     if (H.length > 1) svgEl('text', { x: X1, y: Y1 + 16, 'text-anchor': 'end' }, svg, dDE(H[H.length - 1].d).slice(0, 6));
   }
-  $('logList').innerHTML = H.length ? [...H].reverse().map(h => `
-    <li><span class="d">${dDE(h.d)}</span><span class="p">${fmt(h.p)} Pulls</span><span class="c">${pct(h.c)}</span>
-    <button class="del" data-log="${h.d}" aria-label="Eintrag vom ${dDE(h.d)} löschen">×</button></li>`).join('')
-    : '<li style="display:block;text-align:center;color:var(--mu)">Noch keine Einträge</li>';
+  $('logList').innerHTML = [...H].reverse().map(h => h.rel
+    ? `<li class="rel"><span class="d">${dDE(h.d)}</span><span class="p">Release · 0 Pulls</span><span class="c">0 %</span><span class="del" aria-hidden="true"></span></li>`
+    : `<li><span class="d">${dDE(h.d)}</span><span class="p">${fmt(h.p)} Pulls</span><span class="c">${pct(h.c)}</span>
+    <button class="del" data-log="${h.d}" aria-label="Eintrag vom ${dDE(h.d)} löschen">×</button></li>`).join('');
 }
 function saveToday() {
   const d = todayISO(), p = totalPulls();
@@ -1238,6 +1241,10 @@ document.addEventListener('click', e => {
    Versionsnummer: große Änderung = erste Zahl (Major), kleine Änderung = zweite Zahl (Minor).
    Build = wie oft die Seite insgesamt bearbeitet wurde. Bei jeder Änderung oben einen Eintrag ergänzen. */
 const CHANGELOG = [
+  { v: '2.6', build: 15, date: '21.11.2026', kind: 'Minor', items: [
+    'Verlauf startet immer am Release-Tag 29.10.2026 mit 0 Pulls',
+    'Neue README für das GitHub-Repo'
+  ]},
   { v: '2.5', build: 14, date: '21.11.2026', kind: 'Minor', items: [
     'Ab der Garantie steht einfach 100 %, darunter wie viele Pulls extra übrig sind (keine „Chance auf den 2.“ mehr)',
     'Kleines ⓘ beim Spezial-Vorratsgutschein: zeigt, wo man die Anzahl im Spiel findet',

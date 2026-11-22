@@ -582,8 +582,8 @@ const ICONS = {
 const CURRENCIES = [
   { id: 'ppf',  name: 'Purpurfedermünzen', icon: 'ppf' },
   { id: 'ruta', name: 'Ruta-Münzen', icon: 'ruta' },
-  { id: 'gut',  name: 'Spezial-Vorratsgutschein', icon: 'gut', where: 'Laden › Tauschen › Rekrutierungstausch',
-    info: 'Laden → Tauschen → Rekrutierungstausch: Oben rechts steht die Anzahl der verfügbaren Münzen.' }
+  { id: 'gut',  name: 'Spezial-Vorratsgutschein', icon: 'gut', where: 'Laden › Tauschen › Rekrutierungstausch › Fortgeschr.',
+    info: 'Laden → Tauschen → Rekrutierungstausch → Fortgeschr.: Oben rechts steht die Anzahl der verfügbaren Münzen.' }
 ];
 
 /* Eingebaute Charakter-Liste (wird durch das Google Sheet ersetzt, wenn erreichbar) */
@@ -1514,6 +1514,9 @@ document.addEventListener('click', e => {
    Versionsnummer: große Änderung = erste Zahl (Major), kleine Änderung = zweite Zahl (Minor).
    Build = wie oft die Seite insgesamt bearbeitet wurde. Bei jeder Änderung oben einen Eintrag ergänzen. */
 const CHANGELOG = [
+  { v: '3.3', build: 21, date: '22.11.2026', kind: 'Minor', items: [
+    'ⓘ beim Spezial-Vorratsgutschein: Weg ergänzt um „Fortgeschr.“ (Laden → Tauschen → Rekrutierungstausch → Fortgeschr.)'
+  ]},
   { v: '3.3', build: 20, date: '22.11.2026', kind: 'Minor', items: [
     'Überschriften „Vorrat“, „Banner“ und „Ausgegeben“ deutlich größer'
   ]},

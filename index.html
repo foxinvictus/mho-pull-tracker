@@ -292,13 +292,13 @@
     .dense .row{grid-template-columns:24px 1fr 96px}
     .dense .row.kum{grid-template-columns:24px 1fr 24px 1fr}
   }
-  .sec{font:700 11px/1 'Barlow Condensed',sans-serif;letter-spacing:1.4px;text-transform:uppercase;color:var(--tx);padding:9px 0 4px;border-top:1px solid #3a3a3a;display:flex;align-items:baseline;gap:8px}
-  .sec:first-child{border-top:0;padding-top:6px}
-  .sec span{font:500 10.5px Inter,sans-serif;letter-spacing:0;text-transform:none;color:var(--mu)}
+  .sec{font:700 18px/1 'Barlow Condensed',sans-serif;letter-spacing:1.2px;text-transform:uppercase;color:var(--tx);padding:10px 0 5px;border-top:1px solid #3a3a3a;display:flex;align-items:baseline;gap:9px}
+  .sec:first-child{border-top:0;padding-top:7px}
+  .sec span{font:500 11.5px Inter,sans-serif;letter-spacing:0;text-transform:none;color:var(--mu)}
   .sec + .row{border-top:0}
-  .dense .sec{padding:5px 0 2px}
-  .dense .sec:first-child{padding-top:3px}
-  @media (max-height:700px){ .dense .sec{padding:4px 0 1px;font-size:10.5px} .dense .sec span{display:none} }
+  .dense .sec{padding:7px 0 3px;font-size:17px}
+  .dense .sec:first-child{padding-top:4px}
+  @media (max-height:700px){ .dense .sec{padding:4px 0 0;font-size:16px} .dense .sec span{font-size:10.5px} .dense .sub.static{display:none} }
   [hidden]{display:none!important}
 </style>
 </head>
@@ -759,10 +759,10 @@ function buildMain() {
   const rows = [];
   rows.push('<div class="sec">Vorrat <span>was du gerade hast</span></div>');
   if (S.showStd) rows.push(`<div class="row"><span class="ico">${ICONS.std}</span>
-      <label class="name" for="inStdVertrag">Standard-Vertrag<span class="sub">nur zur Übersicht</span></label>
+      <label class="name" for="inStdVertrag">Standard-Vertrag<span class="sub static">nur zur Übersicht</span></label>
       <input type="number" id="inStdVertrag" inputmode="numeric" min="0" step="1"></div>`);
   rows.push(`<div class="row"><span class="ico">${ICONS.spezial}</span>
-      <label class="name" for="inSpezial">Spezial-Vertrag<span class="sub">zählt 1:1</span></label>
+      <label class="name" for="inSpezial">Spezial-Vertrag<span class="sub static">zählt 1:1</span></label>
       <input type="number" id="inSpezial" inputmode="numeric" min="0" step="1"></div>`);
   for (const c of CURRENCIES) {
     if (!S.swap[c.id]) continue;
@@ -1514,6 +1514,9 @@ document.addEventListener('click', e => {
    Versionsnummer: große Änderung = erste Zahl (Major), kleine Änderung = zweite Zahl (Minor).
    Build = wie oft die Seite insgesamt bearbeitet wurde. Bei jeder Änderung oben einen Eintrag ergänzen. */
 const CHANGELOG = [
+  { v: '3.3', build: 20, date: '22.11.2026', kind: 'Minor', items: [
+    'Überschriften „Vorrat“, „Banner“ und „Ausgegeben“ deutlich größer'
+  ]},
   { v: '3.3', build: 19, date: '22.11.2026', kind: 'Minor', items: [
     'Hauptseite klar gegliedert: „Vorrat“ (was du hast), „Banner“ (Pity) und „Ausgegeben“ (insgesamt gezogen)'
   ]},

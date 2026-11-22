@@ -5,7 +5,7 @@ Rechnet alle Währungen in Spezial-Pulls um, zeigt die Chance auf den Spezial-Ab
 
 **Zur Website:** https://foxinvictus.github.io/mho-pull-tracker/
 
-Aktuelle Version: **3.3 · Build 19** (alle Änderungen in der App unter *Einstellungen → Changelog*)
+Aktuelle Version: **3.3 · Build 20** (alle Änderungen in der App unter *Einstellungen → Changelog*)
 
 ---
 

@@ -5,7 +5,7 @@ Rechnet alle Währungen in Spezial-Pulls um, zeigt die Chance auf den Spezial-Ab
 
 **Zur Website:** https://foxinvictus.github.io/mho-pull-tracker/
 
-Aktuelle Version: **3.1 · Build 17** (alle Änderungen in der App unter *Einstellungen → Changelog*)
+Aktuelle Version: **3.2 · Build 18** (alle Änderungen in der App unter *Einstellungen → Changelog*)
 
 ---
 
@@ -17,11 +17,14 @@ Aktuelle Version: **3.1 · Build 17** (alle Änderungen in der App unter *Einste
 - **„50/50 zuletzt verloren“**: Die Pity läuft ab dem verlorenen 50/50 weiter, die Garantie gibt es nach 90 Pulls.
 - Ab der Garantie steht **100 %** und darunter, wie viele Pulls extra übrig sind.
 - Welche Währungen umgetauscht werden, stellst du in den Einstellungen ein.
+- **Zusätzliche Werte** (Einstellungen → Zusätzliche Werte) erscheinen direkt auf der Hauptseite:
+  - **Standard-Vertrag** über dem Spezial-Vertrag
+  - **Kumulative Werte** als Zeile ganz unten, nur mit Symbol: roter Brief = Spezial-Pulls gesamt, heller Brief = Standard-Pulls gesamt
 - Das **ⓘ** beim Vorratsgutschein zeigt, wo du die Anzahl im Spiel findest.
 
 ### Verlauf
 - **„Heutigen Stand speichern“** auf der Hauptseite trägt deine aktuellen Pulls mit Datum ein (ein Eintrag pro Tag).
-- Gespeichert werden auch die **Standard-Verträge** und die **Gesamt-Pulls** (Spezial und Standard), wenn sie in den Einstellungen unter „Zusätzliche Werte“ eingeschaltet sind.
+- Gespeichert werden auch die **Standard-Verträge** und die **Gesamt-Pulls** (Spezial und Standard), wenn sie eingeschaltet sind.
 - **„Verlauf“** zeigt die Kurve immer ab dem Release am 29.10.2026 mit 0. Umschalter:
   - **Verfügbar**: Spezial-Pulls und Standard-Verträge, die du gerade hast
   - **Ausgegeben**: wie viele Spezial- und Standard-Pulls du insgesamt gemacht hast

@@ -5,13 +5,15 @@ Rechnet alle Währungen in Spezial-Pulls um, zeigt die Chance auf den Spezial-Ab
 
 **Zur Website:** https://foxinvictus.github.io/mho-pull-tracker/
 
-Aktuelle Version: **3.2 · Build 18** (alle Änderungen in der App unter *Einstellungen → Changelog*)
+Aktuelle Version: **3.3 · Build 19** (alle Änderungen in der App unter *Einstellungen → Changelog*)
 
 ---
 
 ## Funktionen
 
 ### Rechner
+Die Hauptseite ist in drei Bereiche gegliedert: **Vorrat** (was du gerade hast), **Banner** (Pity) und **Ausgegeben** (insgesamt gezogen).
+
 - Rechnet **Purpurfedermünzen** (150:1), **Ruta-Münzen** (150:1) und **Spezial-Vorratsgutscheine** (50:1) in Spezial-Pulls um. Es zählen nur ganze Pulls, Reste werden angezeigt.
 - Zeigt die **Chance auf den Spezial-Abenteurer** als Kurve: 50 % bei 90 Pulls, 100 % bei 120 Pulls, inklusive aktueller Pity.
 - **„50/50 zuletzt verloren“**: Die Pity läuft ab dem verlorenen 50/50 weiter, die Garantie gibt es nach 90 Pulls.

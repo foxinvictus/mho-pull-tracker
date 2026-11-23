@@ -687,11 +687,19 @@ function totalPulls() {
   for (const c of CURRENCIES) if (S.swap[c.id]) t += swapped(c.id).pulls;
   return t;
 }
+// Chance auf den Spezial-Abenteurer nach Anzahl Pulls (Tabelle), dazwischen gleichmäßig gerechnet
+const CHANCE_TABLE = [[0, 0], [10, 3.0], [20, 6.0], [30, 9.0], [40, 11.9], [50, 14.8], [60, 17.7], [70, 20.5],
+  [80, 51.0], [90, 59.4], [100, 63.4], [110, 67.1], [120, 100]];
+const HALF_N = CHANCE_TABLE.find(([, c]) => c >= 50)[0];   // ab hier über 50 %
 function chance(n) {
-  const [[p1, c1], [p2, c2]] = THR;
-  if (n >= p2) return c2;
-  if (n >= p1) return c1 + (n - p1) * (c2 - c1) / (p2 - p1);
-  return n * c1 / p1;
+  if (n <= 0) return 0;
+  const last = CHANCE_TABLE[CHANCE_TABLE.length - 1];
+  if (n >= last[0]) return last[1];
+  for (let i = 1; i < CHANCE_TABLE.length; i++) {
+    const [n1, c1] = CHANCE_TABLE[i];
+    if (n <= n1) { const [n0, c0] = CHANCE_TABLE[i - 1]; return c0 + (n - n0) * (c1 - c0) / (n1 - n0); }
+  }
+  return last[1];
 }
 const chanceLost = n => Math.min(100, n * 100 / LOST_LEN);
 // Stand bis zur Garantie: ab der Garantie 100 %, darüber hinaus nur noch „extra“ Pulls
@@ -717,14 +725,12 @@ let graphMode = null;
 function buildGraph(lostMode) {
   if (graphMode === lostMode) return;
   graphMode = lostMode;
-  const [[p1, c1], [p2]] = THR;
-  const k = 9;
-  const f = lostMode ? chanceLost : chance;
-  const P = n => [gx(n), gy(f(n))].map(v => v.toFixed(1)).join(' ');
+  const p1 = lostMode ? LOST_LEN : HALF_N, p2 = THR[1][0];
+  const P = n => [gx(n), gy(chanceLost(n))].map(v => v.toFixed(1)).join(' ');
   const end = lostMode ? LOST_LEN : p2;
   const d = lostMode
     ? `M ${P(0)} L ${P(LOST_LEN)}`
-    : `M ${P(0)} L ${P(p1 - k)} Q ${gx(p1).toFixed(1)} ${gy(c1).toFixed(1)} ${P(p1 + k * (p2 - p1) / p1 * .55)} L ${P(p2)}`;
+    : smoothPath(CHANCE_TABLE.map(([n, c]) => [gx(n), gy(c)]));
   $('gCurve').setAttribute('d', d);
   $('gCurveBg').setAttribute('d', d);
   $('gAreaPath').setAttribute('d', d + ` L ${gx(end)} ${G.y1} L ${gx(0)} ${G.y1} Z`);
@@ -1141,7 +1147,7 @@ function render() {
   const pulls = totalPulls();
   const n = S.pity + pulls;
   const { done, ch, extra, pos, lostMode } = progress(n);
-  const [[p1, c1], [p2]] = THR;
+  const p1 = HALF_N, c1 = chance(HALF_N), p2 = THR[1][0];
   buildGraph(lostMode);
   $('rPulls').textContent = fmt(pulls);
   $('rChance').textContent = pct(ch);
@@ -1514,6 +1520,10 @@ document.addEventListener('click', e => {
    Versionsnummer: große Änderung = erste Zahl (Major), kleine Änderung = zweite Zahl (Minor).
    Build = wie oft die Seite insgesamt bearbeitet wurde. Bei jeder Änderung oben einen Eintrag ergänzen. */
 const CHANGELOG = [
+  { v: '3.4', build: 22, date: '23.11.2026', kind: 'Minor', items: [
+    'Chance folgt jetzt einer genauen Tabelle statt einer geraden Linie: 3 % bei 10 Pulls, 20,5 % bei 70, 51 % bei 80, 59,4 % bei 90, 100 % bei 120',
+    'Kurve auf der Hauptseite zeigt den Sprung ab 70 Pulls, Markierung bei 80 statt 90'
+  ]},
   { v: '3.3', build: 21, date: '22.11.2026', kind: 'Minor', items: [
     'ⓘ beim Spezial-Vorratsgutschein: Weg ergänzt um „Fortgeschr.“ (Laden → Tauschen → Rekrutierungstausch → Fortgeschr.)'
   ]},
@@ -1609,7 +1619,7 @@ const CHANGELOG = [
   { v: '1.0', build: 1, date: '21.11.2026', kind: 'Major', items: [
     'Erste Version des Pull-Rechners im 9:16-Format',
     'Umrechnung von PPF-Münzen, Ruta-Münzen und Spezial-Vorratsgutscheinen in Spezial-Pulls, nur ganze Pulls',
-    'Wahrscheinlichkeit: 50 % bei 90 Pulls, 100 % bei 120 Pulls, inklusive aktueller Pity',
+    'Wahrscheinlichkeit steigt bis 120 Pulls auf 100 %, inklusive aktueller Pity',
     'Einstellungsmenü, Verlauf und Spielstand-Code'
   ]}
 ];
